@@ -1,0 +1,18 @@
+
+//#region src/KubbFile.ts
+var KubbFile_exports = {};
+
+//#endregion
+Object.defineProperty(exports, 'FabricFile', {
+  enumerable: true,
+  get: function () {
+    return KubbFile_exports;
+  }
+});
+Object.defineProperty(exports, 'KubbFile', {
+  enumerable: true,
+  get: function () {
+    return KubbFile_exports;
+  }
+});
+//# sourceMappingURL=types.cjs.map

@@ -1,0 +1,6 @@
+//#endregion
+//#region src/index.d.ts
+declare function run(_argv?: string[]): Promise<void>;
+//#endregion
+export { run };
+//# sourceMappingURL=index.d.cts.map

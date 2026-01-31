@@ -1,0 +1,6 @@
+//#region src/KubbFile.ts
+var KubbFile_exports = {};
+
+//#endregion
+export { KubbFile_exports as FabricFile, KubbFile_exports as KubbFile };
+//# sourceMappingURL=types.js.map
