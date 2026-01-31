@@ -133,6 +133,13 @@ This SDK can be built inside a **Chainguard** container for maximum security and
 docker build -f Dockerfile -t tekimax-ts .
 ```
 
+### 🛡️ Security Verification
+
+*   **Scanner**: Trivy (v0.69.0)
+*   **Date**: 2026-01-31
+*   **Result**: ✅ **0 Vulnerabilities** (Clean)
+*   **Base Image**: `cgr.dev/chainguard/node:latest-dev`
+
 ---
 <div align="center">
   <sub>Built with ❤️ by the Tekimax Team</sub>
