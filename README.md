@@ -21,7 +21,11 @@ The **Tekimax TypeScript SDK** provides fully typed, standards-compliant interfa
 ## 📦 Installation
 
 ```bash
-npm install tekimax-ts
+# Install directly from GitHub (Release v0.1.0)
+npm install github:TEKIMAX/tekimax-ts#v0.1.0
+
+# 🔜 Coming Soon to npm
+# npm install tekimax-ts
 ```
 
 ## 💻 Usage
