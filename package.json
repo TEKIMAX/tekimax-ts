@@ -23,8 +23,15 @@
         "openapi",
         "kubb"
     ],
-    "author": "",
-    "license": "ISC",
+    "author": "Tekimax <hello@tekimax.com>",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/TEKIMAX/tekimax-ts.git"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
     "dependencies": {
         "@kubb/plugin-ts": "^4.20.0",
         "zod": "^3.22.4"
