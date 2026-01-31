@@ -58,11 +58,48 @@ const requestPayload: CreateResponseBody = {
   stream: true
 };
 
-// Send to API
-await fetch('https://api.tekimax.com/v1/generate', {
-  method: 'POST',
-  body: JSON.stringify(requestPayload)
-});
+// Send to API with Authentication and Error Handling
+try {
+  const response = await fetch('https://api.tekimax.com/v1/generate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer YOUR_API_KEY'
+    },
+    body: JSON.stringify(requestPayload)
+  });
+
+  if (!response.ok) {
+    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  console.log('Response:', data);
+  
+} catch (error) {
+  console.error('Failed to generate response:', error);
+}
+```
+
+### Advanced: Custom Configuration
+
+You can extend the generated types to build your own robust client wrapper:
+
+```typescript
+import { CreateResponseBody, RequiredItemParam } from 'tekimax-ts';
+
+interface TekimaxConfig {
+    apiKey: string;
+    baseUrl?: string;
+}
+
+class TekimaxClient {
+    constructor(private config: TekimaxConfig) {}
+
+    async generate(body: CreateResponseBody) {
+        // Implementation...
+    }
+}
 ```
 
 ## 🛠️ Development
