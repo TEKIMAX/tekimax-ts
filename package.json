@@ -1,6 +1,6 @@
 {
     "name": "tekimax-ts",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Tekimax TypeScript SDK generated with Kubb",
     "main": "dist/index.js",
     "module": "dist/index.mjs",
@@ -39,6 +39,7 @@
     "devDependencies": {
         "@kubb/cli": "^4.15.0",
         "@kubb/core": "^4.15.0",
+        "@kubb/plugin-client": "^4.20.0",
         "@kubb/plugin-oas": "^4.15.0",
         "@kubb/plugin-zod": "^4.15.0",
         "ts-node": "^10.9.2",
