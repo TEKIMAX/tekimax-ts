@@ -37,7 +37,7 @@ console.log(followUp.text);
 
 ## 🧠 Motivation and Overview
 
-Modern LLM systems have converged on similar primitives—messages, function calls, tool usage, and multimodal inputs—but each provider encodes them differently. **Tekimax** standardizes these concepts, enabling:
+Modern LLM systems have converged on similar primitives: messages, function calls, tool usage, and multimodal inputs but each provider encodes them differently. **Tekimax** standardizes these concepts, enabling:
 
 *   **One spec, many providers**: Describe inputs/outputs once; run on OpenAI, Anthropic, Gemini, or local models.
 *   **Composable agentic loops**: Unified streaming, tool invocation, and message orchestration.
@@ -48,7 +48,7 @@ Modern LLM systems have converged on similar primitives—messages, function cal
 
 ### Agentic Loop
 
-All models, to some extent, exhibit agency — the ability to perceive input, reason, act through tools, and reflect on outcomes.
+All models, to some extent, exhibit agency: the ability to perceive input, reason, act through tools, and reflect on outcomes.
 
 The **Tekimax Standard** at its core is designed to expose the power of this agentic loop to developers, making requests that allow the model to do multiple things and yield back a result, whether this is developer-hosted tool calls where control is yielded back to the user, or provider-hosted tools where control is held by the model provider until the model signals an exit criteria.
 
@@ -66,7 +66,7 @@ Tekimax defines a common set of items supported by a quorum of model providers, 
 
 Streaming is modeled as a series of semantic events, not raw text or object deltas.
 
-Events describe meaningful transitions. They are either state transitions–`response.in_progress`, `response.completed`–or they can represent a delta from a previous state–`response.output_item.added`, `response.output_text.delta`.
+Events describe meaningful transitions. They are either state transitions (e.g., `response.in_progress`, `response.completed`) or they can represent a delta from a previous state (e.g., `response.output_item.added`, `response.output_text.delta`).
 
 Tekimax defines a common set of streaming events supported by a quorum of model providers, and defines how provider-specific streaming events can be defined.
 
