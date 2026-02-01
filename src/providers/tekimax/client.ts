@@ -1,4 +1,5 @@
 import type { CreateResponseBody, ResponseResource } from '../../gen/types'
+import { createParser } from 'eventsource-parser'
 
 /**
  * A wrapper around the raw API response that provides helper methods
@@ -96,6 +97,59 @@ export class TekimaxClient {
     return new TekimaxResponse(data)
   }
 
+  private async *requestStream(path: string, body: any): AsyncIterable<any> {
+    const response = await fetch(`${this.baseUrl}${path}`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(body),
+    })
+
+    if (!response.ok) {
+      throw new Error(
+        `Tekimax API Error: ${response.status} ${response.statusText}`,
+      )
+    }
+
+    if (!response.body) {
+      throw new Error('No response body received for streaming request')
+    }
+
+    // Modern browsers/environments return a ReadableStream
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+
+    let buffer: any[] = []
+
+    const parser = createParser({
+      onEvent(event: any) {
+        if (event.type === 'event') {
+          try {
+            if (event.data === '[DONE]') return
+            buffer.push(JSON.parse(event.data))
+          } catch (e) {
+            // ignore
+          }
+        }
+      }
+    })
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        parser.feed(decoder.decode(value, { stream: true }))
+
+        // Yield all buffered events
+        while (buffer.length > 0) {
+          yield buffer.shift()
+        }
+      }
+    } finally {
+      reader.releaseLock()
+    }
+  }
+
   /**
    * Creates a new session and sends the initial message.
    *
@@ -133,6 +187,27 @@ export class TekimaxClient {
     message: string,
     options?: MessageOptions,
   ): Promise<TekimaxResponse> {
-    return this.createSession(message, options)
+    // Force stream: false for non-streaming calls
+    const body: CreateResponseBody = {
+      ...options,
+      input: message,
+      stream: false
+    }
+    return this.request('/responses', body)
+  }
+
+  /**
+   * Sends a message and returns an asynchronous iterable of streaming events.
+   */
+  async *sendMessageStream(
+    message: string,
+    options?: MessageOptions
+  ): AsyncIterable<any> {
+    const body: CreateResponseBody = {
+      ...options,
+      input: message,
+      stream: true
+    }
+    yield* this.requestStream('/responses', body)
   }
 }

@@ -30,19 +30,17 @@ export class TekimaxProvider implements TekimaxAdapter {
     }
 
     async *chatStream(options: ChatOptions): AsyncIterable<StreamChunk> {
-        // Note: The low-level client currently proxies stream: true but returns ResponseResource (not async iterable yet)
-        // For now, we mimic streaming behavior or just fallback to await if client doesn't support real streaming iterable yet.
-
-        const response = await this.client.sendMessage(this.getLastUserMessage(options.messages), {
+        const stream = this.client.sendMessageStream(this.getLastUserMessage(options.messages), {
             model: options.model,
             temperature: options.temperature,
             max_output_tokens: options.maxTokens,
         })
 
-        // Simulate a single chunk for now since client.ts isn't fully streaming-capable (it awaits json())
-        if (response.text) {
-            yield {
-                delta: response.text
+        for await (const event of stream) {
+            if (event.type === 'response.output_text.delta' && event.delta) {
+                yield {
+                    delta: event.delta,
+                }
             }
         }
     }
