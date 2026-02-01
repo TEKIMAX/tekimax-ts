@@ -16,24 +16,43 @@ npm install tekimax-ts
 
 ## 💻 Usage
 
-The SDK provides a `TekimaxClient` that manages authentication, session state, and response parsing.
+### Standard Provider Pattern (Recommended)
+
+The SDK provides a `TekimaxProvider` that implements the standard `TekimaxAdapter` interface. This allows for interchangeable providers and consistent behavior.
+
+```typescript
+import { TekimaxProvider } from 'tekimax-ts'
+
+const provider = new TekimaxProvider({
+  apiKey: process.env.TEKIMAX_API_KEY,
+})
+
+// Standard Chat
+const result = await provider.chat({
+  model: 'gpt-4',
+  messages: [{ role: 'user', content: 'Explain quantum computing' }]
+})
+console.log(result.message.content)
+
+// Streaming Chat
+for await (const chunk of provider.chatStream({
+  model: 'gpt-4',
+  messages: [{ role: 'user', content: 'Write a long poem' }]
+})) {
+  process.stdout.write(chunk.delta)
+}
+```
+
+### Low-Level Client
+
+You can still use the direct `TekimaxClient` for raw API access if needed:
 
 ```typescript
 import { TekimaxClient } from 'tekimax-ts'
 
-const client = new TekimaxClient({
-  apiKey: process.env.TEKIMAX_API_KEY,
-})
-
-// Simple message
-const response = await client.sendMessage('Explain quantum computing')
+const client = new TekimaxClient({ apiKey: process.env.TEKIMAX_API_KEY })
+const response = await client.sendMessage('Hello!')
 console.log(response.text)
-
-// Continuing a session (preserves context)
-const followUp = await client.sendMessage('How does it relate to encryption?', {
-  previous_response_id: response.id,
-})
-console.log(followUp.text)
 ```
 
 ## 🧠 Motivation and Overview
