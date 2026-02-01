@@ -73,3 +73,16 @@ Tekimax defines a common set of streaming events supported by a quorum of model 
 ### State Machines
 
 Objects in Tekimax are state machines, that is, they can live in one of a finite number of states, such as `in_progress`, `completed`, or `failed`. The spec defines the set of valid states for each state machine in the API.
+
+---
+
+<div align="center">
+  <p>
+    <strong>Secured by <a href="https://www.chainguard.dev">Chainguard</a></strong><br>
+    Zero-CVE Images for a Safe Supply Chain
+  </p>
+  <p>
+    Built on the <a href="https://openresponses.org">OpenResponses Standard</a> • Generated with <a href="https://kubb.dev">Kubb</a>
+  </p>
+  <sub>Built with ❤️ by the Tekimax Team</sub>
+</div>
