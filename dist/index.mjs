@@ -1284,7 +1284,114 @@ var userMessageItemParamSchema = z103.object({
   }))]).describe("A piece of message content, such as text, an image, or a file.")), z103.string()]).describe("The message content, as an array of content parts."),
   "status": z103.optional(z103.union([z103.string(), z103.null()]))
 });
+
+// src/client.ts
+var TekimaxResponse = class {
+  constructor(_raw) {
+    this._raw = _raw;
+  }
+  /**
+   * Access the raw response object returned by the API.
+   */
+  get raw() {
+    return this._raw;
+  }
+  /**
+   * Automatically extracts the text content from the response.
+   * It looks for the first "output_text" item in the response content.
+   */
+  get text() {
+    if (!this._raw.output) return void 0;
+    for (const item of this._raw.output) {
+      if (item.type === "message") {
+        for (const contentPart of item.content) {
+          if (contentPart.type === "output_text" || contentPart.type === "text") {
+            return contentPart.text;
+          }
+        }
+      }
+    }
+    return void 0;
+  }
+  /**
+   * The ID of the response.
+   */
+  get id() {
+    return this._raw.id ?? void 0;
+  }
+  /**
+   * The model used to generate the response.
+   */
+  get model() {
+    return this._raw.model ?? void 0;
+  }
+};
+var TekimaxClient = class {
+  /**
+   * Creates a new TekimaxClient.
+   * 
+   * @param options - Configuration options for the client.
+   * @param options.baseUrl - The base URL of the API (default: "https://api.tekimax.com").
+   * @param options.apiKey - Your Tekimax API key.
+   * 
+   * @example
+   * const client = new TekimaxClient({ apiKey: "tm_..." });
+   */
+  constructor(options = {}) {
+    this.baseUrl = options.baseUrl || "https://api.tekimax.com";
+    this.headers = {
+      "Content-Type": "application/json",
+      ...options.apiKey ? { "Authorization": `Bearer ${options.apiKey}` } : {}
+    };
+  }
+  async request(path, body) {
+    const response = await fetch(`${this.baseUrl}${path}`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify(body)
+    });
+    if (!response.ok) {
+      throw new Error(`Tekimax API Error: ${response.status} ${response.statusText}`);
+    }
+    const data = await response.json();
+    return new TekimaxResponse(data);
+  }
+  /**
+   * Creates a new session and sends the initial message.
+   * 
+   * @param message - The initial message text to start the session.
+   * @param options - Additional configuration options (model, temperature, etc.).
+   * 
+   * @example
+   * const response = await client.createSession("Hello, world!", { model: "gpt-4" });
+   * console.log(response.text);
+   */
+  async createSession(message, options) {
+    const body = {
+      ...options,
+      input: message
+    };
+    return this.request("/responses", body);
+  }
+  /**
+   * Sends a message to an existing session or starts a new one if no previous_response_id is provided.
+   * 
+   * @param message - The message text to send.
+   * @param options - Additional configuration options.
+   * 
+   * @example
+   * const response = await client.sendMessage("What is the weather?", { 
+   *   previous_response_id: "resp_123" 
+   * });
+   * console.log(response.text);
+   */
+  async sendMessage(message, options) {
+    return this.createSession(message, options);
+  }
+};
 export {
+  TekimaxClient,
+  TekimaxResponse,
   allowedToolChoiceSchema,
   allowedToolChoiceTypeEnum,
   allowedToolsParamSchema,
