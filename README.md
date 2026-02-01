@@ -74,6 +74,17 @@ Tekimax defines a common set of streaming events supported by a quorum of model 
 
 Objects in Tekimax are state machines, that is, they can live in one of a finite number of states, such as `in_progress`, `completed`, or `failed`. The spec defines the set of valid states for each state machine in the API.
 
+## 🛡️ Security & Trust
+
+At **Tekimax**, we believe security is a feature, not an afterthought.
+
+*   **Zero Vulnerabilities**: We enforce a strict **Zero CVE** policy. Our SDK is audited daily.
+*   **Minimal Surface Area**: By optimizing our dependency tree, we identified and **removed 159 unnecessary packages**, drastically reducing the attack surface.
+*   **Secured by Chainguard**: Our build pipeline and artifacts rely on [Chainguard Images](https://www.chainguard.dev/chainguard-images)—hardened, minimal container images designed to secure the software supply chain. Chainguard images are stripped of shells, package managers, and other unnecessary tools that attackers often exploit.
+
+Supply chain attacks on the Node.js/npm ecosystem are increasingly common. By building on Chainguard, we ensure that the Tekimax SDK meets the highest standards of integrity and safety for enterprise and production use.
+
+
 ---
 
 <div align="center">
