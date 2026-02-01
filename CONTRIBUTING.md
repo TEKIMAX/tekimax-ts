@@ -26,9 +26,9 @@ npm run generate
 
 ## Pull Requests
 
-*   Please keep PRs focused on a single change.
-*   Update documentation if you change behavior.
-*   Ensure the code builds cleanly.
+- Please keep PRs focused on a single change.
+- Update documentation if you change behavior.
+- Ensure the code builds cleanly.
 
 ## Code of Conduct
 

@@ -1,1 +1,12 @@
-{"properties":{"type":{"type":"string","enum":["json_object"],"default":"json_object"}},"type":"object","required":["type"],"x-readme-ref-name":"JsonObjectResponseFormat"}
+{
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": ["json_object"],
+      "default": "json_object"
+    }
+  },
+  "type": "object",
+  "required": ["type"],
+  "x-readme-ref-name": "JsonObjectResponseFormat"
+}

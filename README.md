@@ -3,8 +3,9 @@
   <h1>Tekimax TS</h1>
   <p><strong>A type-safe, framework-agnostic AI SDK for building AI-powered apps.</strong></p>
 
-  [![npm version](https://img.shields.io/npm/v/tekimax-ts.svg)](https://www.npmjs.com/package/tekimax-ts)
-  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![npm version](https://img.shields.io/npm/v/tekimax-ts.svg)](https://www.npmjs.com/package/tekimax-ts)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 </div>
 
 ## 📦 Installation
@@ -18,31 +19,31 @@ npm install tekimax-ts
 The SDK provides a `TekimaxClient` that manages authentication, session state, and response parsing.
 
 ```typescript
-import { TekimaxClient } from 'tekimax-ts';
+import { TekimaxClient } from 'tekimax-ts'
 
 const client = new TekimaxClient({
-    apiKey: process.env.TEKIMAX_API_KEY
-});
+  apiKey: process.env.TEKIMAX_API_KEY,
+})
 
 // Simple message
-const response = await client.sendMessage("Explain quantum computing");
-console.log(response.text);
+const response = await client.sendMessage('Explain quantum computing')
+console.log(response.text)
 
 // Continuing a session (preserves context)
-const followUp = await client.sendMessage("How does it relate to encryption?", {
-    previous_response_id: response.id
-});
-console.log(followUp.text);
+const followUp = await client.sendMessage('How does it relate to encryption?', {
+  previous_response_id: response.id,
+})
+console.log(followUp.text)
 ```
 
 ## 🧠 Motivation and Overview
 
 Modern LLM systems have converged on similar primitives: messages, function calls, tool usage, and multimodal inputs but each provider encodes them differently. **Tekimax** standardizes these concepts, enabling:
 
-*   **One spec, many providers**: Describe inputs/outputs once; run on OpenAI, Anthropic, Gemini, or local models.
-*   **Composable agentic loops**: Unified streaming, tool invocation, and message orchestration.
-*   **Easier evaluation and routing**: Compare providers, route requests, and log results through a shared schema.
-*   **Blueprints for provider APIs**: Labs and model providers wanting to expose their APIs in a common format can easily do so.
+- **One spec, many providers**: Describe inputs/outputs once; run on OpenAI, Anthropic, Gemini, or local models.
+- **Composable agentic loops**: Unified streaming, tool invocation, and message orchestration.
+- **Easier evaluation and routing**: Compare providers, route requests, and log results through a shared schema.
+- **Blueprints for provider APIs**: Labs and model providers wanting to expose their APIs in a common format can easily do so.
 
 ## 🔑 Key Principles
 
@@ -78,18 +79,17 @@ Objects in Tekimax are state machines, that is, they can live in one of a finite
 
 At **Tekimax**, we believe security is a feature, not an afterthought.
 
-*   **Zero Vulnerabilities**: We enforce a strict **Zero CVE** policy. Our SDK is audited daily.
-*   **Minimal Surface Area**: By optimizing our dependency tree, we identified and **removed 159 unnecessary packages**, drastically reducing the attack surface.
-*   **Secured by Chainguard**: Our build pipeline and artifacts rely on [Chainguard Images](https://www.chainguard.dev/chainguard-images)—hardened, minimal container images designed to secure the software supply chain. Chainguard images are stripped of shells, package managers, and other unnecessary tools that attackers often exploit.
+- **Zero Vulnerabilities**: We enforce a strict **Zero CVE** policy. Our SDK is audited daily.
+- **Minimal Surface Area**: By optimizing our dependency tree, we identified and **removed 159 unnecessary packages**, drastically reducing the attack surface.
+- **Secured by Chainguard**: Our build pipeline and artifacts rely on [Chainguard Images](https://www.chainguard.dev/chainguard-images)—hardened, minimal container images designed to secure the software supply chain. Chainguard images are stripped of shells, package managers, and other unnecessary tools that attackers often exploit.
 
 Supply chain attacks on the Node.js/npm ecosystem are increasingly common. By building on Chainguard, we ensure that the Tekimax SDK meets the highest standards of integrity and safety for enterprise and production use.
 
-
 ## Get Involved
 
-*   We welcome issues and pull requests!
-*   Participate in **GitHub Discussions**.
-*   See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup instructions.
+- We welcome issues and pull requests!
+- Participate in **GitHub Discussions**.
+- See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup instructions.
 
 ## Partners
 
@@ -99,8 +99,7 @@ We're looking for Tekimax Partners to join our mission! Partner with us to push 
 
 ## Code of Conduct
 
-Please note that this project is released with a [Contributor Code of Conduct](./CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
----
+## Please note that this project is released with a [Contributor Code of Conduct](./CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
 
 <div align="center">
   <p>
