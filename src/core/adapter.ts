@@ -6,10 +6,10 @@ export interface TekimaxAdapter {
     /**
      * Send a chat completion request.
      */
-    chat(options: ChatOptions): Promise<ChatResult>
+    chat: (options: ChatOptions) => Promise<ChatResult>
 
     /**
      * Stream a chat completion.
      */
-    chatStream(options: ChatOptions): AsyncIterable<StreamChunk>
+    chatStream: (options: ChatOptions) => AsyncIterable<StreamChunk>
 }

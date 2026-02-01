@@ -1,6 +1,6 @@
-import type { TekimaxAdapter } from '../../core/adapter'
-import type { ChatOptions, ChatResult, StreamChunk, Message } from '../../core/types'
 import { TekimaxClient } from './client'
+import type { TekimaxAdapter } from '../../core/adapter'
+import type { ChatOptions, ChatResult, Message, StreamChunk } from '../../core/types'
 
 export class TekimaxProvider implements TekimaxAdapter {
     readonly name = 'tekimax'
@@ -15,6 +15,7 @@ export class TekimaxProvider implements TekimaxAdapter {
             model: options.model,
             temperature: options.temperature,
             max_output_tokens: options.maxTokens,
+            signal: options.signal,
         })
 
         if (!response.text) {
@@ -34,6 +35,7 @@ export class TekimaxProvider implements TekimaxAdapter {
             model: options.model,
             temperature: options.temperature,
             max_output_tokens: options.maxTokens,
+            signal: options.signal,
         })
 
         for await (const event of stream) {
@@ -45,7 +47,7 @@ export class TekimaxProvider implements TekimaxAdapter {
         }
     }
 
-    private getLastUserMessage(messages: Message[]): string {
+    private getLastUserMessage(messages: Array<Message>): string {
         const lastUser = messages.slice().reverse().find(m => m.role === 'user')
         return lastUser ? lastUser.content : ''
     }

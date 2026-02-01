@@ -1,5 +1,5 @@
-import type { CreateResponseBody, ResponseResource } from '../../gen/types'
 import { createParser } from 'eventsource-parser'
+import type { CreateResponseBody, ResponseResource } from '../../gen/types'
 
 /**
  * A wrapper around the raw API response that provides helper methods
@@ -53,7 +53,9 @@ export class TekimaxResponse {
 /**
  * Options for sending a message or creating a session.
  */
-export type MessageOptions = Omit<CreateResponseBody, 'input' | 'stream'>
+export type MessageOptions = Omit<CreateResponseBody, 'input' | 'stream'> & {
+  signal?: AbortSignal
+}
 
 /**
  * The main client for interacting with the Tekimax API.
@@ -80,11 +82,12 @@ export class TekimaxClient {
     }
   }
 
-  private async request(path: string, body: any): Promise<TekimaxResponse> {
+  private async request(path: string, body: any, options?: { signal?: AbortSignal }): Promise<TekimaxResponse> {
     const response = await fetch(`${this.baseUrl}${path}`, {
       method: 'POST',
       headers: this.headers,
       body: JSON.stringify(body),
+      signal: options?.signal,
     })
 
     if (!response.ok) {
@@ -97,11 +100,12 @@ export class TekimaxClient {
     return new TekimaxResponse(data)
   }
 
-  private async *requestStream(path: string, body: any): AsyncIterable<any> {
+  private async *requestStream(path: string, body: any, options?: { signal?: AbortSignal }): AsyncIterable<any> {
     const response = await fetch(`${this.baseUrl}${path}`, {
       method: 'POST',
       headers: this.headers,
       body: JSON.stringify(body),
+      signal: options?.signal,
     })
 
     if (!response.ok) {
@@ -118,7 +122,7 @@ export class TekimaxClient {
     const reader = response.body.getReader()
     const decoder = new TextDecoder()
 
-    let buffer: any[] = []
+    const buffer: Array<any> = []
 
     const parser = createParser({
       onEvent(event: any) {
@@ -134,6 +138,7 @@ export class TekimaxClient {
     })
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
@@ -168,7 +173,12 @@ export class TekimaxClient {
       ...options,
       input: message,
     }
-    return this.request('/responses', body)
+    // Remove signal from body if present (spread copies it)
+    const { signal } = options || {}
+    const cleanBody = { ...body }
+    delete (cleanBody as any).signal
+
+    return this.request('/responses', cleanBody, { signal })
   }
 
   /**
@@ -193,7 +203,11 @@ export class TekimaxClient {
       input: message,
       stream: false
     }
-    return this.request('/responses', body)
+    const { signal } = options || {}
+    const cleanBody = { ...body }
+    delete (cleanBody as any).signal
+
+    return this.request('/responses', cleanBody, { signal })
   }
 
   /**
@@ -208,6 +222,10 @@ export class TekimaxClient {
       input: message,
       stream: true
     }
-    yield* this.requestStream('/responses', body)
+    const { signal } = options || {}
+    const cleanBody = { ...body }
+    delete (cleanBody as any).signal
+
+    yield* this.requestStream('/responses', cleanBody, { signal })
   }
 }

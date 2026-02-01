@@ -43,6 +43,44 @@ for await (const chunk of provider.chatStream({
 }
 ```
 
+### React Integration
+
+The SDK includes a `useChat` hook for React applications. To use it, install React:
+
+```bash
+npm install react
+```
+
+Then import from `tekimax-ts/react`:
+
+```tsx
+import { TekimaxProvider } from 'tekimax-ts'
+import { useChat } from 'tekimax-ts/react'
+
+const provider = new TekimaxProvider({ apiKey: '...' })
+
+function Chat() {
+  const { messages, input, handleInputChange, handleSubmit, isLoading, stop } = useChat({
+    adapter: provider,
+    model: 'gpt-4'
+  })
+
+  return (
+    <div>
+      {messages.map((m, i) => (
+        <div key={i}><strong>{m.role}:</strong> {m.content}</div>
+      ))}
+      
+      <form onSubmit={handleSubmit}>
+        <input value={input} onChange={handleInputChange} disabled={isLoading} />
+        <button type="submit" disabled={isLoading}>Send</button>
+        <button type="button" onClick={stop} disabled={!isLoading}>Stop</button>
+      </form>
+    </div>
+  )
+}
+```
+
 ### Low-Level Client
 
 You can still use the direct `TekimaxClient` for raw API access if needed:

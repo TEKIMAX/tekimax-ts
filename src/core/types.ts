@@ -7,10 +7,11 @@ export interface Message {
 
 export interface ChatOptions {
     model: string
-    messages: Message[]
+    messages: Array<Message>
     temperature?: number
     maxTokens?: number
     stream?: boolean
+    signal?: AbortSignal
 }
 
 export interface ChatResult {
