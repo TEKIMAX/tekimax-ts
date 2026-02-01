@@ -18,6 +18,23 @@ export interface ToolDefinition {
     }
 }
 
+export interface Tool<T = any> extends ToolDefinition {
+    execute: (args: T) => Promise<unknown>
+}
+
+export interface GenerateTextResult {
+    text: string
+    toolCalls: Array<ToolCall>
+    toolResults: Array<{ id: string; result: unknown }>
+    finishReason: 'stop' | 'length' | 'tool_calls' | 'error' | 'unknown'
+    usage: {
+        promptTokens: number
+        completionTokens: number
+        totalTokens: number
+    }
+    warnings?: Array<string>
+}
+
 export interface Message {
     role: MessageRole
     content: string | null

@@ -43,9 +43,44 @@ for await (const chunk of provider.chatStream({
 }
 ```
 
-### React Integration
+### Agents & Tools
 
-The SDK includes a `useChat` hook for React applications. To use it, install React:
+The SDK supports high-level "Agentic" workflows where the model can autonomously call tools.
+
+```typescript
+import { TekimaxProvider, generateText, tool } from 'tekimax-ts'
+
+const provider = new TekimaxProvider({ apiKey: '...' })
+
+const weatherTool = tool({
+  type: 'function', // optional, defaults to 'function' in helper
+  function: {
+    name: 'get_weather',
+    description: 'Get current weather',
+    parameters: {
+      type: 'object',
+      properties: {
+        location: { type: 'string' }
+      },
+      required: ['location']
+    }
+  },
+  execute: async ({ location }) => {
+    return { temperature: 72, condition: 'Sunny' }
+  }
+})
+
+const result = await generateText({
+  adapter: provider,
+  model: 'gpt-4',
+  messages: [{ role: 'user', content: 'What is the weather in SF?' }],
+  tools: { weather: weatherTool },
+  maxSteps: 5 // Allow up to 5 steps (Model -> Tool -> Model loop)
+})
+
+console.log(result.text) 
+// "The weather in San Francisco is sunny with a temperature of 72°F."
+```
 
 ```bash
 npm install react
