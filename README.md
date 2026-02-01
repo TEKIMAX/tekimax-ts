@@ -1,7 +1,7 @@
 <div align="center">
   <img src="./public/logos/tekimax-logo-ScreenRGB-2.png" alt="Tekimax SDK Logo" width="200" />
   <h1>Tekimax TypeScript SDK</h1>
-  <p><strong>Type-safe OpenResponses for Node.js, Browser, and Edge.</strong></p>
+  <p><strong>Type-safe Tekimax Client for Node.js, Browser, and Edge.</strong></p>
 
   [![npm version](https://img.shields.io/npm/v/tekimax-ts.svg)](https://www.npmjs.com/package/tekimax-ts)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -9,7 +9,7 @@
 
 ## 📖 Overview
 
-The **Tekimax TypeScript SDK** provides fully typed, standards-compliant interfaces for the OpenResponses specification. Generated via [Kubb](https://kubb.dev/), it ensures your application stays in sync with the latest API standards.
+The **Tekimax TypeScript SDK** provides fully typed interfaces for the Tekimax API. Generated via [Kubb](https://kubb.dev/), it ensures your application stays in sync with the latest API definitions.
 
 ## ✨ Features
 
