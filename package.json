@@ -1,7 +1,7 @@
 {
     "name": "tekimax-ts",
     "version": "0.1.7",
-    "description": "Type-safe Tekimax Client for Node.js, Browser, and Edge.",
+    "description": "A type-safe, framework-agnostic AI SDK for building AI-powered apps.",
     "homepage": "https://tekimax.com",
     "main": "dist/index.js",
     "module": "dist/index.mjs",
@@ -23,7 +23,7 @@
         "openapi",
         "kubb"
     ],
-    "author": "Tekimax <hello@tekimax.com>",
+    "author": "Tekimax <info@tekimax.com>",
     "license": "MIT",
     "repository": {
         "type": "git",

@@ -1,7 +1,7 @@
 <div align="center">
   <img src="./public/logos/tekimax-logo-ScreenRGB-2.png" alt="Tekimax SDK Logo" width="200" />
-  <h1>TEKIMAX SDK Typescript</h1>
-  <p><strong>Type-safe Tekimax Client for Node.js, Browser, and Edge.</strong></p>
+  <h1>Tekimax TS</h1>
+  <p><strong>A type-safe, framework-agnostic AI SDK for building AI-powered apps.</strong></p>
 
   [![npm version](https://img.shields.io/npm/v/tekimax-ts.svg)](https://www.npmjs.com/package/tekimax-ts)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -85,6 +85,21 @@ At **Tekimax**, we believe security is a feature, not an afterthought.
 Supply chain attacks on the Node.js/npm ecosystem are increasingly common. By building on Chainguard, we ensure that the Tekimax SDK meets the highest standards of integrity and safety for enterprise and production use.
 
 
+## Get Involved
+
+*   We welcome issues and pull requests!
+*   Participate in **GitHub Discussions**.
+*   See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup instructions.
+
+## Partners
+
+We're looking for Tekimax Partners to join our mission! Partner with us to push the boundaries of Tekimax and build amazing things together.
+
+[LET'S CHAT](mailto:info@tekimax.com?subject=Tekimax%20Partnership)
+
+## Code of Conduct
+
+Please note that this project is released with a [Contributor Code of Conduct](./CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
 ---
 
 <div align="center">
