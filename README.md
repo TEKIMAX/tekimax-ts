@@ -1,22 +1,11 @@
 <div align="center">
   <img src="./public/logos/tekimax-logo-ScreenRGB-2.png" alt="Tekimax SDK Logo" width="200" />
-  <h1>Tekimax TypeScript SDK</h1>
+  <h1>TEKIMAX SDK Typescript</h1>
   <p><strong>Type-safe Tekimax Client for Node.js, Browser, and Edge.</strong></p>
 
   [![npm version](https://img.shields.io/npm/v/tekimax-ts.svg)](https://www.npmjs.com/package/tekimax-ts)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 </div>
-
-## 📖 Overview
-
-The **Tekimax TypeScript SDK** provides fully typed interfaces for the Tekimax API. Generated via [Kubb](https://kubb.dev/), it ensures your application stays in sync with the latest API definitions.
-
-## ✨ Features
-
-- **Full TypeScript Support**: strict typing for all API request/response bodies.
-- **Runtime Validation**: Optional Zod schemas for validating data at runtime.
-- **Universal**: Works in Node.js, React/Vite/Next.js, and Cloudflare Workers.
-- **Tree-Shakeable**: Import only what you need.
 
 ## 📦 Installation
 
@@ -26,117 +15,61 @@ npm install tekimax-ts
 
 ## 💻 Usage
 
-### Importing Types
+The SDK provides a `TekimaxClient` that manages authentication, session state, and response parsing.
 
 ```typescript
-import { 
-  UserMessageItemParam, 
-  CreateResponseBody 
-} from 'tekimax-ts';
+import { TekimaxClient } from 'tekimax-ts';
 
-// Strongly typed message object
-const userMessage: UserMessageItemParam = {
-  type: 'message',
-  role: 'user',
-  content: [
-    {
-      type: 'input_text',
-      text: 'Explain quantum computing'
-    }
-  ]
-};
+const client = new TekimaxClient({
+    apiKey: process.env.TEKIMAX_API_KEY
+});
+
+// Simple message
+const response = await client.sendMessage("Explain quantum computing");
+console.log(response.text);
+
+// Continuing a session (preserves context)
+const followUp = await client.sendMessage("How does it relate to encryption?", {
+    previous_response_id: response.id
+});
+console.log(followUp.text);
 ```
 
-### formatting a Request
+## 🧠 Motivation and Overview
 
-```typescript
-import { CreateResponseBody } from 'tekimax-ts';
+Modern LLM systems have converged on similar primitives—messages, function calls, tool usage, and multimodal inputs—but each provider encodes them differently. **Tekimax** standardizes these concepts, enabling:
 
-const requestPayload: CreateResponseBody = {
-  model: 'tekimax-1.0',
-  items: [userMessage],
-  stream: true
-};
+*   **One spec, many providers**: Describe inputs/outputs once; run on OpenAI, Anthropic, Gemini, or local models.
+*   **Composable agentic loops**: Unified streaming, tool invocation, and message orchestration.
+*   **Easier evaluation and routing**: Compare providers, route requests, and log results through a shared schema.
+*   **Blueprints for provider APIs**: Labs and model providers wanting to expose their APIs in a common format can easily do so.
 
-// Send to API with Authentication and Error Handling
-try {
-  const response = await fetch('https://api.tekimax.com/v1/generate', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer YOUR_API_KEY'
-    },
-    body: JSON.stringify(requestPayload)
-  });
+## 🔑 Key Principles
 
-  if (!response.ok) {
-    throw new Error(`API Error: ${response.status} ${response.statusText}`);
-  }
+### Agentic Loop
 
-  const data = await response.json();
-  console.log('Response:', data);
-  
-} catch (error) {
-  console.error('Failed to generate response:', error);
-}
-```
+All models, to some extent, exhibit agency — the ability to perceive input, reason, act through tools, and reflect on outcomes.
 
-### Advanced: Custom Configuration
+The **Tekimax Standard** at its core is designed to expose the power of this agentic loop to developers, making requests that allow the model to do multiple things and yield back a result, whether this is developer-hosted tool calls where control is yielded back to the user, or provider-hosted tools where control is held by the model provider until the model signals an exit criteria.
 
-You can extend the generated types to build your own robust client wrapper:
+Tekimax defines a common pattern for defining control flow in the agent loop, a set of item definitions for developer-controlled tools, and pattern for defining provider and router-hosted tools.
 
-```typescript
-import { CreateResponseBody, RequiredItemParam } from 'tekimax-ts';
+### Items → Items
 
-interface TekimaxConfig {
-    apiKey: string;
-    baseUrl?: string;
-}
+Items are the fundamental unit of context in Tekimax: they represent an atomic unit of model output, tool invocation, or reasoning state. Items are bidirectional, they can be provided as inputs to the model, or as outputs from the model.
 
-class TekimaxClient {
-    constructor(private config: TekimaxConfig) {}
+Each item type has a defined schema that binds it and contains properties specific to its unique purpose.
 
-    async generate(body: CreateResponseBody) {
-        // Implementation...
-    }
-}
-```
+Tekimax defines a common set of items supported by a quorum of model providers, and defines how provider-specific item types can be defined.
 
-## 🛠️ Development
+### Semantic Events
 
-This SDK is generated from a centralized OpenAPI specification.
+Streaming is modeled as a series of semantic events, not raw text or object deltas.
 
-### Regenerate Code
+Events describe meaningful transitions. They are either state transitions–`response.in_progress`, `response.completed`–or they can represent a delta from a previous state–`response.output_item.added`, `response.output_text.delta`.
 
-If the spec changes, run:
+Tekimax defines a common set of streaming events supported by a quorum of model providers, and defines how provider-specific streaming events can be defined.
 
-```bash
-npm run generate
-```
+### State Machines
 
-### Build
-
-```bash
-npm run build
-```
-
-### Secure Container Build
-
-This SDK can be built inside a **Chainguard** container for maximum security and reproducibility.
-
-```bash
-# Build using the hardened Chainguard Node.js image
-docker build -f Dockerfile -t tekimax-ts .
-```
-
-### 🛡️ Security Verification
-
-*   **Scanner**: Trivy (v0.69.0)
-*   **Date**: 2026-01-31
-*   **Result**: ✅ **0 Vulnerabilities** (Clean)
-*   **Base Image**: `cgr.dev/chainguard/node:latest-dev`
-
----
-<div align="center">
-  <sub>Built with ❤️ by the Tekimax Team</sub>
-</div>
+Objects in Tekimax are state machines, that is, they can live in one of a finite number of states, such as `in_progress`, `completed`, or `failed`. The spec defines the set of valid states for each state machine in the API.
