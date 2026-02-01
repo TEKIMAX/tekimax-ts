@@ -1,11 +1,11 @@
-import type { CreateResponseBody, ResponseResource } from './gen/types'
+import type { CreateResponseBody, ResponseResource } from '../../gen/types'
 
 /**
  * A wrapper around the raw API response that provides helper methods
  * for common tasks like extracting text content.
  */
 export class TekimaxResponse {
-  constructor(private readonly _raw: ResponseResource) {}
+  constructor(private readonly _raw: ResponseResource) { }
 
   /**
    * Access the raw response object returned by the API.

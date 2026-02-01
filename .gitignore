@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-types/
+
+# Generated
+src/gen/
+.kubb/
+
+# System
+.DS_Store
+.env
+
+# Analysis
+ANALYSIS_REPORT.md
