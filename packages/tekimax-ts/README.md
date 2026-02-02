@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./public/logos/tekimax-logo-ScreenRGB-2.png" alt="Tekimax SDK Logo" width="200" />
+  <img src="https://raw.githubusercontent.com/TEKIMAX/tekimax-ts/main/apps/docs/public/tekimax-logo.png" alt="Tekimax SDK Logo" width="200" />
   <h1>Tekimax TS</h1>
   <p><strong>A type-safe, framework-agnostic AI SDK for building AI-powered apps.</strong></p>
 

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/TEKIMAX/tekimax-ts/main/public/tekimax-logo.png" alt="Tekimax SDK Logo" width="120" />
+  <img src="https://raw.githubusercontent.com/TEKIMAX/tekimax-ts/main/apps/docs/public/tekimax-logo.png" alt="Tekimax SDK Logo" width="120" />
   <h1>Tekimax SDK</h1>
   <p><strong>The Universal AI Adapter Layer</strong></p>
   
