@@ -15,3 +15,5 @@ tekimax
 tekimax-website
 
 *.tgz
+
+scripts/verify-unified.ts
