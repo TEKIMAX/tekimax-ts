@@ -20,6 +20,78 @@ export class OpenAIProvider implements AIProvider {
         })
     }
 
+    async generateSpeech(options: import('../../core').SpeechGenerationOptions): Promise<import('../../core').SpeechResult> {
+        const response = await this.client.audio.speech.create({
+            model: options.model || 'tts-1',
+            voice: options.voice as any,
+            input: options.input,
+            response_format: options.response_format,
+            speed: options.speed
+        })
+
+        const buffer = await response.arrayBuffer()
+        return {
+            buffer,
+            headers: {
+                'content-type': response.type
+            }
+        }
+    }
+
+    async generateImage(options: import('../../core').ImageGenerationOptions): Promise<import('../../core').ImageResult> {
+        const response = await this.client.images.generate({
+            model: options.model || 'dall-e-3',
+            prompt: options.prompt,
+            n: options.n,
+            size: options.size as any,
+            quality: options.quality as any,
+            style: options.style as any,
+            response_format: options.response_format,
+            user: options.user
+        })
+
+        return {
+            created: response.created,
+            data: response.data as any
+        }
+    }
+
+    async analyzeImage(options: import('../../core').ImageAnalysisOptions): Promise<import('../../core').ImageAnalysisResult> {
+        const messages: any[] = [
+            ...(options.messages ? this.mapMessages(options.messages) : []),
+            {
+                role: 'user',
+                content: [
+                    { type: 'text', text: options.prompt || 'Describe this image' },
+                    {
+                        type: 'image_url',
+                        image_url: {
+                            url: options.image instanceof Buffer ? `data:image/png;base64,${options.image.toString('base64')}` : options.image as string
+                        }
+                    }
+                ]
+            }
+        ]
+
+        const response = await this.client.chat.completions.create({
+            model: options.model || 'gpt-4o',
+            messages: messages,
+            max_tokens: 1000
+        })
+
+        const choice = response.choices[0]
+        if (!choice) throw new Error('No choice returned from OpenAI')
+
+        return {
+            content: choice.message.content || '',
+            usage: response.usage ? {
+                inputTokens: response.usage.prompt_tokens,
+                outputTokens: response.usage.completion_tokens,
+                totalTokens: response.usage.total_tokens
+            } : undefined
+        }
+    }
+
     async chat(options: ChatOptions): Promise<ChatResult> {
         const response = await this.client.chat.completions.create({
             model: options.model,

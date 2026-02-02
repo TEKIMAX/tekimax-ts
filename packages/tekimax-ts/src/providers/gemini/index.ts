@@ -42,6 +42,56 @@ export class GeminiProvider implements AIProvider {
         })
     }
 
+    async analyzeVideo(options: import('../../core').VideoAnalysisOptions): Promise<import('../../core').VideoAnalysisResult> {
+        let videoPart: Part;
+        const videoInput = options.video;
+
+        if (typeof videoInput === 'string') {
+            if (videoInput.startsWith('http')) {
+                const resp = await fetch(videoInput);
+                const arrayBuffer = await resp.arrayBuffer();
+                const base64 = Buffer.from(arrayBuffer).toString('base64');
+                videoPart = {
+                    inlineData: {
+                        data: base64,
+                        mimeType: 'video/mp4'
+                    }
+                };
+            } else {
+                videoPart = {
+                    inlineData: {
+                        data: videoInput,
+                        mimeType: 'video/mp4'
+                    }
+                }
+            }
+        } else if (typeof Buffer !== 'undefined' && videoInput instanceof Buffer) {
+            videoPart = {
+                inlineData: {
+                    data: videoInput.toString('base64'),
+                    mimeType: 'video/mp4'
+                }
+            }
+        } else {
+            throw new Error('Unsupported video format')
+        }
+
+        const model = this.client.getGenerativeModel({ model: options.model });
+        const result = await model.generateContent([
+            options.prompt || 'Analyze this video',
+            videoPart
+        ]);
+
+        return {
+            content: result.response.text(),
+            usage: {
+                inputTokens: result.response.usageMetadata?.promptTokenCount,
+                outputTokens: result.response.usageMetadata?.candidatesTokenCount,
+                totalTokens: result.response.usageMetadata?.totalTokenCount
+            }
+        }
+    }
+
     async chat(options: ChatOptions): Promise<ChatResult> {
         const model = this.client.getGenerativeModel({
             model: options.model || 'gemini-pro',
