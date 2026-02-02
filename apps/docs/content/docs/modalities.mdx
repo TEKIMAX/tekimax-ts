@@ -49,6 +49,19 @@ const result = await client.images.generate({
 });
 
 console.log(result.data[0].url);
+
+### Image Analysis (Vision)
+
+Analyze images using multi-modal models like GPT-4o or Claude 3.5 Sonnet.
+
+```typescript
+const analysis = await client.images.analyze({
+    model: 'gpt-4o',
+    image: 'https://example.com/chart.png', // URL or Base64
+    prompt: 'Extract the data from this chart.'
+});
+
+console.log(analysis.content);
 ```
 
 ---
@@ -61,7 +74,7 @@ The `client.audio` namespace provides Text-to-Speech (TTS) capabilities.
 import { Tekimax, OpenAIProvider } from 'tekimax-ts';
 
 const client = new Tekimax({
-    provider: new OpenAIProvider({ apiKey: '...' }) 
+    provider: new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY }) 
 });
 
 // Convert text to speech
@@ -79,26 +92,34 @@ console.log(`Generated ${audio.buffer.byteLength} bytes of audio`);
 
 ## Video
 
-The `client.videos` namespace handles video generation.
+The `client.videos` namespace handles video generation and analysis.
+
+### Video Generation
 
 ```typescript
 // Generate a video from a prompt
 const video = await client.videos.generate({
   prompt: 'A cat running in a field of sunflowers',
-  model: 'veo', // Google Veo
+  model: 'luma-dream-machine', 
 });
 
 console.log(video.data[0].url);
 ```
 
-### Video Analysis (Video-to-Text)
+### Video Analysis (Gemini)
 
-You can also analyze video content.
+We support native video analysis using Gemini's multi-modal capabilities.
 
 ```typescript
+import { Tekimax, GeminiProvider } from 'tekimax-ts';
+
+const client = new Tekimax({
+    provider: new GeminiProvider({ apiKey: process.env.GEMINI_API_KEY })
+});
+
 const analysis = await client.videos.analyze({
     video: 'https://cdn.example.com/beach_sunset.mp4',
-    model: 'gpt-4o',
+    model: 'gemini-1.5-flash',
     prompt: 'Describe the scene and the lighting conditions.'
 });
 
