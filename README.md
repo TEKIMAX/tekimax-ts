@@ -40,7 +40,7 @@ The **Tekimax SDK** solves the fragmentation of AI APIs. Instead of rewriting yo
 
 ```bash
 # Install core and your desired adapters
-npm install tekimax-ts tekimax-openai tekimax-anthropic
+npm install tekimax-ts
 ```
 
 ## 🛠️ Usage
