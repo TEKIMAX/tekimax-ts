@@ -1,0 +1,21 @@
+{
+    "name": "tekimax-anthropic",
+    "version": "0.1.0",
+    "main": "./dist/index.js",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "scripts": {
+        "build": "tsup src/index.ts --format cjs,esm --dts",
+        "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+        "lint": "eslint src/"
+    },
+    "dependencies": {
+        "tekimax-ts": "*",
+        "@anthropic-ai/sdk": "^0.33.1"
+    },
+    "devDependencies": {
+        "tsup": "^8.3.5",
+        "typescript": "^5.7.2",
+        "@types/node": "^22.10.2"
+    }
+}

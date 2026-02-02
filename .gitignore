@@ -1,17 +1,14 @@
-# Dependencies
-node_modules/
-
-# Build outputs
-dist/
-dist-types/
-
-# Generated
-src/gen/
-.kubb/
-
-# System
+node_modules
 .DS_Store
-.env
+dist
+.turbo
+.next
 
-# Analysis
-ANALYSIS_REPORT.md
+# Non-Monorepo Projects (User Request)
+tekimax-go
+tekimax-rust
+tekimax-cli
+tanstack-ai
+cli-backkup
+spec
+*.tgz

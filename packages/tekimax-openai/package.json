@@ -1,0 +1,23 @@
+{
+    "name": "tekimax-openai",
+    "version": "0.1.0",
+    "type": "module",
+    "main": "dist/index.js",
+    "module": "dist/index.mjs",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsup src/index.ts --format cjs,esm --dts",
+        "demo": "ts-node demo.ts",
+        "lint": "eslint ."
+    },
+    "dependencies": {
+        "openai": "^4.0.0",
+        "tekimax-ts": "*"
+    },
+    "devDependencies": {
+        "@types/node": "^20.19.30",
+        "ts-node": "^10.9.2",
+        "tsup": "^8.0.0",
+        "typescript": "^5.0.0"
+    }
+}

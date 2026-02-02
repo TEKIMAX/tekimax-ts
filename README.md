@@ -1,205 +1,155 @@
 <div align="center">
-  <img src="./public/logos/tekimax-logo-ScreenRGB-2.png" alt="Tekimax SDK Logo" width="200" />
-  <h1>Tekimax TS</h1>
-  <p><strong>A type-safe, framework-agnostic AI SDK for building AI-powered apps.</strong></p>
+  <img src="https://raw.githubusercontent.com/TEKIMAX/tekimax-ts/main/public/tekimax-logo.png" alt="Tekimax SDK Logo" width="120" />
+  <h1>Tekimax SDK</h1>
+  <p><strong>The Universal AI Adapter Layer</strong></p>
+  
+  <p>
+    <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
+    <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0-3178C6.svg" alt="TypeScript"></a>
+    <a href="https://tekimax.com"><img src="https://img.shields.io/badge/Standard-Tekimax-000000.svg" alt="Standard"></a>
+  </p>
+  
+  <p>
+    Integrate <strong>OpenAI</strong>, <strong>Anthropic</strong>, <strong>Gemini</strong>, <strong>Ollama</strong>, <strong>Grok</strong>, and <strong>OpenRouter</strong> with a single, type-safe API.
+  </p>
 
-[![npm version](https://img.shields.io/npm/v/tekimax-ts.svg)](https://www.npmjs.com/package/tekimax-ts)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
+  <div>
+    <img src="https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white" alt="OpenAI" />
+    <img src="https://img.shields.io/badge/Anthropic-D06940?style=for-the-badge&logo=anthropic&logoColor=white" alt="Anthropic" />
+    <img src="https://img.shields.io/badge/Gemini-8E75B2?style=for-the-badge&logo=google%20gemini&logoColor=white" alt="Gemini" />
+    <img src="https://img.shields.io/badge/Ollama-000000?style=for-the-badge&logo=ollama&logoColor=white" alt="Ollama" />
+    <img src="https://img.shields.io/badge/Grok-000000?style=for-the-badge&logo=x&logoColor=white" alt="Grok" />
+    <img src="https://img.shields.io/badge/OpenRouter-6366F1?style=for-the-badge&logo=openai&logoColor=white" alt="OpenRouter" />
+  </div>
 </div>
 
-## 📦 Installation
+---
+
+## 🚀 The Universal Standard
+
+The **Tekimax SDK** solves the fragmentation of AI APIs. Instead of rewriting your integration code for every provider (handling different request formats, streaming implementations, and error types), you use **one standard interface**.
+
+- **Write Once, Run Anywhere**: Switch between OpenAI (Cloud) and Ollama (Local) with a singe line of config.
+- **Type-Safe**: Full TypeScript support with Zod validation for inputs and outputs.
+- **Edge Compatible**: Zero-dependency core designed for Vercel Edge, Cloudflare Workers, and simplistic Node.js environments.
+- **React Ready**: Includes `useChat` and `useCompletion` hooks for instant UI integration.
+
+## 📦 Package Ecosystem
+
+| Package | Description | Version |
+|---------|-------------|---------|
+| **[`tekimax-ts`](./packages/tekimax-ts)** | Core Interface, Types, and React Hooks. | [![npm](https://img.shields.io/npm/v/tekimax-ts)](https://www.npmjs.com/package/tekimax-ts) |
+| **[`tekimax-openai`](./packages/tekimax-openai)** | Adapter for OpenAI (GPT-4o, etc). | [![npm](https://img.shields.io/npm/v/tekimax-openai)](https://www.npmjs.com/package/tekimax-openai) |
+| **[`tekimax-anthropic`](./packages/tekimax-anthropic)** | Adapter for Anthropic (Claude 3.5 Sonnet). | [![npm](https://img.shields.io/npm/v/tekimax-anthropic)](https://www.npmjs.com/package/tekimax-anthropic) |
+| **[`tekimax-gemini`](./packages/tekimax-gemini)** | Adapter for Google Gemini (Pro 1.5). | [![npm](https://img.shields.io/npm/v/tekimax-gemini)](https://www.npmjs.com/package/tekimax-gemini) |
+| **[`tekimax-ollama`](./packages/tekimax-ollama)** | Adapter for Local Ollama models. | [![npm](https://img.shields.io/npm/v/tekimax-ollama)](https://www.npmjs.com/package/tekimax-ollama) |
+| **[`tekimax-grok`](./packages/tekimax-grok)** | Adapter for xAI Grok. | [![npm](https://img.shields.io/npm/v/tekimax-grok)](https://www.npmjs.com/package/tekimax-grok) |
+| **[`tekimax-openrouter`](./packages/tekimax-openrouter)** | Adapter for OpenRouter (Aggregator). | [![npm](https://img.shields.io/npm/v/tekimax-openrouter)](https://www.npmjs.com/package/tekimax-openrouter) |
+
+## 💻 Installation
 
 ```bash
-npm install tekimax-ts
+# Install core and your desired adapters
+npm install tekimax-ts tekimax-openai tekimax-anthropic
 ```
 
-## 💻 Usage
+## 🛠️ Usage
 
-### Standard Provider Pattern (Recommended)
-
-The SDK provides a `TekimaxProvider` that implements the standard `TekimaxAdapter` interface. This allows for interchangeable providers and consistent behavior.
+### 1. Initialize the Client
 
 ```typescript
-import { TekimaxProvider } from 'tekimax-ts'
+import { Tekimax } from 'tekimax-ts';
+import { OpenAIProvider } from 'tekimax-openai';
+import { AnthropicProvider } from 'tekimax-anthropic';
 
-const provider = new TekimaxProvider({
-  apiKey: process.env.TEKIMAX_API_KEY,
-})
+// Initialize with OpenAI
+const client = new Tekimax({
+  provider: new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY })
+});
 
-// Standard Chat
-const result = await provider.chat({
-  model: 'gpt-4',
-  messages: [{ role: 'user', content: 'Explain quantum computing' }]
-})
-console.log(result.message.content)
+// Want to switch to Anthropic? Just swap the provider:
+// const client = new Tekimax({
+//   provider: new AnthropicProvider({ apiKey: process.env.ANTHROPIC_API_KEY })
+// });
+```
 
-// Streaming Chat
-for await (const chunk of provider.chatStream({
-  model: 'gpt-4',
-  messages: [{ role: 'user', content: 'Write a long poem' }]
-})) {
-  process.stdout.write(chunk.delta)
+### 2. Stream Chat Responses
+
+The API is identical regardless of the provider.
+
+```typescript
+import { UserMessage } from 'tekimax-ts';
+
+const messages: UserMessage[] = [
+  { role: 'user', content: 'Explain quantum computing in 5 words.' }
+];
+
+const stream = await client.chat.completions.create({
+  model: 'gpt-4o', // or 'claude-3-5-sonnet-20240620'
+  messages,
+  stream: true,
+});
+
+for await (const chunk of stream) {
+  process.stdout.write(chunk.choices[0]?.delta?.content || '');
 }
 ```
 
-### Agents & Tools
-
-The SDK supports high-level "Agentic" workflows where the model can autonomously call tools.
-
-```typescript
-import { TekimaxProvider, generateText, tool } from 'tekimax-ts'
-
-const provider = new TekimaxProvider({ apiKey: '...' })
-
-const weatherTool = tool({
-  type: 'function', // optional, defaults to 'function' in helper
-  function: {
-    name: 'get_weather',
-    description: 'Get current weather',
-    parameters: {
-      type: 'object',
-      properties: {
-        location: { type: 'string' }
-      },
-      required: ['location']
-    }
-  },
-  execute: async ({ location }) => {
-    return { temperature: 72, condition: 'Sunny' }
-  }
-})
-
-const result = await generateText({
-  adapter: provider,
-  model: 'gpt-4',
-  messages: [{ role: 'user', content: 'What is the weather in SF?' }],
-  tools: { weather: weatherTool },
-  maxSteps: 5 // Allow up to 5 steps (Model -> Tool -> Model loop)
-})
-
-console.log(result.text) 
-// "The weather in San Francisco is sunny with a temperature of 72°F."
-```
-
-```bash
-npm install react
-```
-
-Then import from `tekimax-ts/react`:
+### 3. Use in React
 
 ```tsx
-import { TekimaxProvider } from 'tekimax-ts'
-import { useChat } from 'tekimax-ts/react'
+import { useChat } from 'tekimax-ts/react';
+import { OpenAIProvider } from 'tekimax-openai';
 
-const provider = new TekimaxProvider({ apiKey: '...' })
-
-function Chat() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, stop } = useChat({
-    adapter: provider,
-    model: 'gpt-4'
-  })
+export function Chat() {
+  const { messages, input, handleInputChange, handleSubmit } = useChat({
+    provider: new OpenAIProvider({ apiKey: '...' }), // In production, use a proxy endpoint!
+  });
 
   return (
     <div>
-      {messages.map((m, i) => (
-        <div key={i}><strong>{m.role}:</strong> {m.content}</div>
+      {messages.map(m => (
+        <div key={m.id}>
+          <strong>{m.role}:</strong> {m.content}
+        </div>
       ))}
       
       <form onSubmit={handleSubmit}>
-        <input value={input} onChange={handleInputChange} disabled={isLoading} />
-        <button type="submit" disabled={isLoading}>Send</button>
-        <button type="button" onClick={stop} disabled={!isLoading}>Stop</button>
+        <input value={input} onChange={handleInputChange} />
       </form>
     </div>
-  )
+  );
 }
 ```
 
-### Low-Level Client
+## 🏗️ Monorepo Structure
 
-You can still use the direct `TekimaxClient` for raw API access if needed:
+This repository is managed as a **Turborepo** monorepo.
 
-```typescript
-import { TekimaxClient } from 'tekimax-ts'
+- **`apps/docs`**: Documentation site (Next.js + Fumadocs).
+- **`packages/*`**: Core SDK and Provider Adapters.
+- **`tekimax-cli`**: Developer tools for Tekimax.
 
-const client = new TekimaxClient({ apiKey: process.env.TEKIMAX_API_KEY })
-const response = await client.sendMessage('Hello!')
-console.log(response.text)
+### Commands
+
+```bash
+# Build all packages
+npx turbo build
+
+# Run tests
+npx turbo test
+
+## 💖 Support
+
+Tekimax is open source. If you find it valuable, please consider [becoming a sponsor](https://github.com/sponsors/TEKIMAX) to support long-term maintenance.
+
+# Start Docs Site
+npx turbo dev --filter=docs
 ```
 
-## 🧠 Motivation and Overview
-
-Modern LLM systems have converged on similar primitives: messages, function calls, tool usage, and multimodal inputs but each provider encodes them differently. **Tekimax** standardizes these concepts, enabling:
-
-- **One spec, many providers**: Describe inputs/outputs once; run on OpenAI, Anthropic, Gemini, or local models.
-- **Composable agentic loops**: Unified streaming, tool invocation, and message orchestration.
-- **Easier evaluation and routing**: Compare providers, route requests, and log results through a shared schema.
-- **Blueprints for provider APIs**: Labs and model providers wanting to expose their APIs in a common format can easily do so.
-
-## 🔑 Key Principles
-
-### Agentic Loop
-
-All models, to some extent, exhibit agency: the ability to perceive input, reason, act through tools, and reflect on outcomes.
-
-The **Tekimax Standard** at its core is designed to expose the power of this agentic loop to developers, making requests that allow the model to do multiple things and yield back a result, whether this is developer-hosted tool calls where control is yielded back to the user, or provider-hosted tools where control is held by the model provider until the model signals an exit criteria.
-
-Tekimax defines a common pattern for defining control flow in the agent loop, a set of item definitions for developer-controlled tools, and pattern for defining provider and router-hosted tools.
-
-### Items → Items
-
-Items are the fundamental unit of context in Tekimax: they represent an atomic unit of model output, tool invocation, or reasoning state. Items are bidirectional, they can be provided as inputs to the model, or as outputs from the model.
-
-Each item type has a defined schema that binds it and contains properties specific to its unique purpose.
-
-Tekimax defines a common set of items supported by a quorum of model providers, and defines how provider-specific item types can be defined.
-
-### Semantic Events
-
-Streaming is modeled as a series of semantic events, not raw text or object deltas.
-
-Events describe meaningful transitions. They are either state transitions (e.g., `response.in_progress`, `response.completed`) or they can represent a delta from a previous state (e.g., `response.output_item.added`, `response.output_text.delta`).
-
-Tekimax defines a common set of streaming events supported by a quorum of model providers, and defines how provider-specific streaming events can be defined.
-
-### State Machines
-
-Objects in Tekimax are state machines, that is, they can live in one of a finite number of states, such as `in_progress`, `completed`, or `failed`. The spec defines the set of valid states for each state machine in the API.
-
-## 🛡️ Security & Trust
-
-At **Tekimax**, we believe security is a feature, not an afterthought.
-
-- **Zero Vulnerabilities**: We enforce a strict **Zero CVE** policy. Our SDK is audited daily.
-- **Minimal Surface Area**: By optimizing our dependency tree, we identified and **removed 159 unnecessary packages**, drastically reducing the attack surface.
-- **Secured by Chainguard**: Our build pipeline and artifacts rely on [Chainguard Images](https://www.chainguard.dev/chainguard-images)—hardened, minimal container images designed to secure the software supply chain. Chainguard images are stripped of shells, package managers, and other unnecessary tools that attackers often exploit.
-
-Supply chain attacks on the Node.js/npm ecosystem are increasingly common. By building on Chainguard, we ensure that the Tekimax SDK meets the highest standards of integrity and safety for enterprise and production use.
-
-## Get Involved
-
-- We welcome issues and pull requests!
-- Participate in **GitHub Discussions**.
-- See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup instructions.
-
-## Partners
-
-We're looking for Tekimax Partners to join our mission! Partner with us to push the boundaries of Tekimax and build amazing things together.
-
-[LET'S CHAT](mailto:info@tekimax.com?subject=Tekimax%20Partnership)
-
-## Code of Conduct
-
-## Please note that this project is released with a [Contributor Code of Conduct](./CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
+---
 
 <div align="center">
-  <p>
-    <strong>Secured by <a href="https://www.chainguard.dev">Chainguard</a></strong><br>
-    Zero-CVE Images for a Safe Supply Chain
-  </p>
-  <p>
-    Built on the <a href="https://openresponses.org">OpenResponses Standard</a> • Generated with <a href="https://kubb.dev">Kubb</a>
-  </p>
-  <sub>Built with ❤️ by the Tekimax Team</sub>
+  <p>Built with ❤️ by the Tekimax Team</p>
+  <p>Secure by Design • Type-Safe by Default</p>
 </div>
