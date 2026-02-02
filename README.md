@@ -7,6 +7,8 @@
     <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
     <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0-3178C6.svg" alt="TypeScript"></a>
     <a href="https://tekimax.com"><img src="https://img.shields.io/badge/Standard-Tekimax-000000.svg" alt="Standard"></a>
+    <a href="https://www.npmjs.com/package/tekimax-ts"><img src="https://img.shields.io/npm/v/tekimax-ts.svg" alt="NPM Version"></a>
+    <a href="https://bundlephobia.com/package/tekimax-ts"><img src="https://img.shields.io/bundlephobia/minzip/tekimax-ts" alt="Bundle Size"></a>
   </p>
   
   <p>
@@ -155,5 +157,4 @@ Tekimax is open source. If you find it valuable, please consider [becoming a spo
 
 <div align="center">
   <p>Built with ❤️ by the Tekimax Team</p>
-  <p>Secure by Design • Type-Safe by Default</p>
 </div>
