@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Tekimax Documentation
 
-## Getting Started
+The official documentation for the **Tekimax Universal AI Adapter Layer**.
 
-First, run the development server:
+## 📚 Overview
+
+This site serves as the single source of truth for the Tekimax SDK ecosystem. It covers:
+- **Core Concepts**: Agentic loops, items, state machines.
+- **Modalities**: Text, Image, Audio, Video interfaces.
+- **Adapters**: Guides and API references for `tekimax-ts`.
+
+## 🛠️ Stack
+
+Built with:
+- **[Fumadocs](https://fumadocs.vercel.app)**: Best-in-class documentation framework for Next.js.
+- **[Next.js 14+](https://nextjs.org)**: Server-side rendering and static export.
+- **[Tailwind CSS](https://tailwindcss.com)**: Styling.
+- **[Shiki](https://shiki.style)**: Syntax highlighting.
+
+## 🚀 Development
+
+We use `npm` (monorepo root uses `pnpm`, but this workspace works with `npm` in isolation or via `turbo`).
 
 ```bash
+# From root
+npm run dev --workspace=apps/docs
+
+# From apps/docs
+cd apps/docs
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚢 Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Deployed to **Cloudflare Pages**.
+- **Production**: `https://docs.tekimax.com`
+- **Output**: Static export (`output: 'export'` in `next.config.mjs`).
 
-## Learn More
+## 📝 Content Management
 
-To learn more about Next.js, take a look at the following resources:
+Documentation content lives in `content/docs`.
+- Format: MDX
+- Frontmatter: `title`, `description` (Required)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
