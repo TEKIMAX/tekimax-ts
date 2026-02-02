@@ -16,7 +16,7 @@ type ContentPart = TextContentPart | ImageContentPart
 
 interface AppConfig {
   provider: ProviderType
-  apiKey?: string
+  // apiKey removed to prevent persistence
   baseUrl?: string
   model: string
 }
@@ -37,6 +37,7 @@ function App() {
   // Connection Interface State
   const [selectedProvider, setSelectedProvider] = useState<ProviderType>('openai')
   const [tempApiKey, setTempApiKey] = useState('')
+  const [sessionApiKey, setSessionApiKey] = useState('') // In-memory only key
   const [tempBaseUrl, setTempBaseUrl] = useState(DEFAULT_OLLAMA_URL)
   const [tempModel, setTempModel] = useState(DEFAULT_OPENAI_MODEL)
 
@@ -55,7 +56,8 @@ function App() {
   useEffect(() => {
     if (config) {
       setSelectedProvider(config.provider)
-      setTempApiKey(config.apiKey || '')
+      // Do NOT hydrate apiKey from config (it's not there anymore)
+      setTempApiKey('')
       setTempBaseUrl(config.baseUrl || DEFAULT_OLLAMA_URL)
       setTempModel(config.model)
     }
@@ -106,9 +108,11 @@ function App() {
     if (!config) return null
 
     if (config.provider === 'openai') {
+      // Use sessionApiKey (in-memory) instead of config
+      if (!sessionApiKey) return null
       return new Tekimax({
         provider: new OpenAIProvider({
-          apiKey: config.apiKey!,
+          apiKey: sessionApiKey,
         })
       })
     } else if (config.provider === 'ollama') {
@@ -119,7 +123,7 @@ function App() {
       })
     }
     return null
-  }, [config])
+  }, [config, sessionApiKey])
 
   // Custom Tools
   const tools = useMemo(() => ({
@@ -181,26 +185,28 @@ IMPORTANT: You should ONLY use tools when necessary.
   // Handlers
   const handleSaveConfig = (e: React.FormEvent) => {
     e.preventDefault()
+
+    // 1. Set Session Key (In-Memory)
+    if (selectedProvider === 'openai') {
+      setSessionApiKey(tempApiKey)
+    }
+
+    // 2. Create Safe Config (No Secrets)
     const newConfig: AppConfig = {
       provider: selectedProvider,
       model: tempModel,
-      ...(selectedProvider === 'openai' ? { apiKey: tempApiKey } : { baseUrl: tempBaseUrl })
+      ...(selectedProvider === 'ollama' ? { baseUrl: tempBaseUrl } : {})
     }
 
-    // Security Fix: Do NOT store API Key in localStorage
-    // We only store non-sensitive config like provider, model, and base URL
-    const configToStore = { ...newConfig }
-    if (configToStore.provider === 'openai') {
-      delete configToStore.apiKey
-    }
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(configToStore))
+    // 3. Persist Safe Config
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newConfig))
     setConfig(newConfig)
   }
 
   const handleDisconnect = () => {
     localStorage.removeItem(STORAGE_KEY)
     setConfig(null)
+    setSessionApiKey('')
     setMessages([])
     setTempApiKey('')
   }
@@ -238,7 +244,12 @@ IMPORTANT: You should ONLY use tools when necessary.
   }
 
   // --- Render Connection Screen ---
-  if (!config) {
+  // Show connection screen if:
+  // 1. No config exists (first load)
+  // 2. Config exists but it's OpenAI and we have no session key (refresh)
+  const showConnectionScreen = !config || (config.provider === 'openai' && !sessionApiKey)
+
+  if (showConnectionScreen) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background text-foreground p-4 font-sans selection:bg-primary/20">
         <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-500">
