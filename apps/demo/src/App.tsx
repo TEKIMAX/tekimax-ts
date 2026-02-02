@@ -186,7 +186,15 @@ IMPORTANT: You should ONLY use tools when necessary.
       model: tempModel,
       ...(selectedProvider === 'openai' ? { apiKey: tempApiKey } : { baseUrl: tempBaseUrl })
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newConfig))
+
+    // Security Fix: Do NOT store API Key in localStorage
+    // We only store non-sensitive config like provider, model, and base URL
+    const configToStore = { ...newConfig }
+    if (configToStore.provider === 'openai') {
+      delete configToStore.apiKey
+    }
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(configToStore))
     setConfig(newConfig)
   }
 
