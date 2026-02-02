@@ -44,7 +44,11 @@ jobs:
         run: |
           echo "### Security Scan Results 🛡️" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          cat trivy-results.txt >> $GITHUB_STEP_SUMMARY
+          if [ -f trivy-results.txt ]; then
+            cat trivy-results.txt >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No scan results generated. Check the build/scan step for errors." >> $GITHUB_STEP_SUMMARY
+          fi
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           echo "#### 💡 Legend" >> $GITHUB_STEP_SUMMARY
           echo "- **Vulnerabilities**: 0 = Safe. (Target: Zero CVEs)" >> $GITHUB_STEP_SUMMARY
