@@ -12,6 +12,12 @@ export default function Layout({ children }: { children: ReactNode }) {
                     <BrandLogo />
                 )
             }}
+            links={[
+                {
+                    text: 'Website',
+                    url: 'https://tekimax.com',
+                },
+            ]}
         >
             {children}
         </DocsLayout >
