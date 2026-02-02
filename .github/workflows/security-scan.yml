@@ -46,3 +46,6 @@ jobs:
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           cat trivy-results.txt >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "#### 💡 Legend" >> $GITHUB_STEP_SUMMARY
+          echo "- **Vulnerabilities**: 0 = Safe. (Target: Zero CVEs)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Secrets**: \`-\` = Safe. (No leaked API keys/passwords)" >> $GITHUB_STEP_SUMMARY
