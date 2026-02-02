@@ -43,73 +43,87 @@ The **Tekimax SDK** solves the fragmentation of AI APIs. Instead of rewriting yo
 npm install tekimax-ts
 ```
 
-## 🛠️ Usage
+## � Usage
 
 ### 1. Initialize the Client
 
-```typescript
-import { Tekimax } from 'tekimax-ts';
-import { OpenAIProvider } from 'tekimax-openai';
-import { AnthropicProvider } from 'tekimax-anthropic';
+The `Tekimax` client is the unified entry point. It wraps any provider (OpenAI, Anthropic, Ollama, etc.) and exposes a consistent multi-modal interface.
 
-// Initialize with OpenAI
+```typescript
+import { 
+  Tekimax, 
+  OpenAIProvider, 
+  AnthropicProvider, 
+  OllamaProvider,
+  GeminiProvider 
+} from 'tekimax-ts'
+
+// OpenAI
 const client = new Tekimax({
-  provider: new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY })
-});
+    provider: new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY })
+})
 
-// Want to switch to Anthropic? Just swap the provider:
-// const client = new Tekimax({
-//   provider: new AnthropicProvider({ apiKey: process.env.ANTHROPIC_API_KEY })
-// });
+// Anthropic
+const claude = new Tekimax({
+    provider: new AnthropicProvider({ apiKey: process.env.ANTHROPIC_API_KEY })
+})
+
+// Ollama (Local)
+const local = new Tekimax({
+    provider: new OllamaProvider({ baseUrl: 'http://localhost:11434' })
+})
 ```
 
-### 2. Stream Chat Responses
+### 2. Multi-Modal Interfaces
 
-The API is identical regardless of the provider.
+The client is organized into cohesive namespaces:
+
+#### Text (Chat)
 
 ```typescript
-import { UserMessage } from 'tekimax-ts';
-
-const messages: UserMessage[] = [
-  { role: 'user', content: 'Explain quantum computing in 5 words.' }
-];
-
-const stream = await client.chat.completions.create({
-  model: 'gpt-4o', // or 'claude-3-5-sonnet-20240620'
-  messages,
-  stream: true,
-});
-
-for await (const chunk of stream) {
-  process.stdout.write(chunk.choices[0]?.delta?.content || '');
-}
+const response = await client.text.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [{ role: 'user', content: 'Hello!' }]
+})
+console.log(response.message.content)
 ```
 
-### 3. Use in React
+#### Images (Generation & Vision)
 
-```tsx
-import { useChat } from 'tekimax-ts/react';
-import { OpenAIProvider } from 'tekimax-openai';
+```typescript
+// Generate
+const image = await client.images.generate({
+    model: 'dall-e-3',
+    prompt: 'A cyberpunk city',
+    size: '1024x1024'
+})
 
-export function Chat() {
-  const { messages, input, handleInputChange, handleSubmit } = useChat({
-    provider: new OpenAIProvider({ apiKey: '...' }), // In production, use a proxy endpoint!
-  });
+// Analyze (Vision)
+const analysis = await client.images.analyze({
+    model: 'gpt-4o',
+    image: 'https://example.com/image.png',
+    prompt: 'Describe this scene'
+})
+```
 
-  return (
-    <div>
-      {messages.map(m => (
-        <div key={m.id}>
-          <strong>{m.role}:</strong> {m.content}
-        </div>
-      ))}
-      
-      <form onSubmit={handleSubmit}>
-        <input value={input} onChange={handleInputChange} />
-      </form>
-    </div>
-  );
-}
+#### Audio (TTS)
+
+```typescript
+const audio = await client.audio.speak({
+    model: 'tts-1',
+    input: 'Hello world',
+    voice: 'alloy'
+})
+```
+
+#### Video (Analysis)
+
+```typescript
+const analysis = await client.videos.analyze({
+    model: 'gemini-1.5-flash',
+    video: 'https://example.com/video.mp4',
+    prompt: 'Summarize this clip'
+})
 ```
 
 ## 🏗️ Monorepo Structure
@@ -129,13 +143,13 @@ npx turbo build
 # Run tests
 npx turbo test
 
-## 💖 Support
-
-Tekimax is open source. If you find it valuable, please consider [becoming a sponsor](https://github.com/sponsors/TEKIMAX) to support long-term maintenance.
-
 # Start Docs Site
 npx turbo dev --filter=docs
 ```
+
+## 💖 Support
+
+Tekimax is open source. If you find it valuable, please consider [becoming a sponsor](https://github.com/sponsors/TEKIMAX) to support long-term maintenance.
 
 ---
 
