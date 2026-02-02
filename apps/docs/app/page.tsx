@@ -1,6 +1,6 @@
 import { HomeLayout } from 'fumadocs-ui/layouts/home';
 import Link from 'next/link';
-import { Terminal, Cpu, Zap, Globe, Shield, Code2, Heart } from 'lucide-react';
+import { Zap, Globe, Shield, Heart } from 'lucide-react';
 import { CopyButton } from '@/components/copy-button';
 import { CustomCodeBlock } from '@/components/custom-code-block';
 import { BrandLogo } from '@/components/brand-logo';
@@ -58,7 +58,7 @@ export default function HomePage() {
             <div className="p-12 lg:p-24 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-border">
               <div className="mb-8 inline-flex">
                 <span className="inline-block border border-foreground px-3 py-1 text-xs font-bold uppercase tracking-wider">
-                  v1.0.0 Beta
+                  v0.1.8 Latest
                 </span>
               </div>
 

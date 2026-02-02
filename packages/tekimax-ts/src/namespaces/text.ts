@@ -1,5 +1,5 @@
 import { AIProvider } from '../core/adapter'
-import { ChatOptions, ChatResult, StreamChunk, Message } from '../core/types'
+import { ChatOptions, ChatResult, StreamChunk } from '../core/types'
 
 export class TextNamespace {
     constructor(private provider: AIProvider) { }
