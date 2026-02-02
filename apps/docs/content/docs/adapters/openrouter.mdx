@@ -1,0 +1,38 @@
+---
+title: OpenRouter Adapter
+description: Access hundreds of models via OpenRouter.
+---
+
+# OpenRouter Adapter
+
+The `tekimax-openrouter` package allows you to use OpenRouter as a gateway to virtually any LLM.
+
+## Installation
+
+```bash
+npm install tekimax-openrouter
+```
+
+## Usage
+
+```typescript
+import { Tekimax } from 'tekimax-ts';
+import { OpenRouterProvider } from 'tekimax-openrouter';
+
+const client = new Tekimax({
+  provider: new OpenRouterProvider({
+    apiKey: process.env.OPENROUTER_API_KEY,
+    siteUrl: 'https://mysite.com', // Optional: for OpenRouter rankings
+    siteName: 'My App',            // Optional
+  })
+});
+
+const result = await client.chat.completions.create({
+  model: 'nousresearch/hermes-2-pro-llama-3-8b',
+  messages: [{ role: 'user', content: 'Hello OpenRouter' }]
+});
+```
+
+## Model Names
+
+OpenRouter requires the full model ID (e.g., `vendor/model-name`). Check [OpenRouter Docs](https://openrouter.ai/docs) for the list.

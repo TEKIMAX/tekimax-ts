@@ -1,0 +1,44 @@
+---
+title: Ollama Adapter
+description: Run local LLMs (Llama 3, Mistral) with Tekimax.
+---
+
+# Ollama Adapter
+
+The `tekimax-ollama` package connects to a local Ollama instance (default port `11434`).
+
+## Installation
+
+```bash
+npm install tekimax-ollama
+```
+
+## Usage
+
+```typescript
+import { Tekimax } from 'tekimax-ts';
+import { OllamaProvider } from 'tekimax-ollama';
+
+const client = new Tekimax({
+  provider: new OllamaProvider({
+    baseUrl: 'http://127.0.0.1:11434/api', // Default
+  })
+});
+
+const result = await client.chat.completions.create({
+  model: 'llama3', // Must be pulled in Ollama first (`ollama pull llama3`)
+  messages: [{ role: 'user', content: 'Why is the sky blue?' }]
+});
+```
+
+## Streaming
+
+Local models support streaming out of the box with the standard interface.
+
+```typescript
+const stream = await client.chat.completions.create({
+  model: 'mistral',
+  messages: [{ role: 'user', content: 'Count to 10 efficiently.' }],
+  stream: true
+});
+```

@@ -1,0 +1,40 @@
+---
+title: OpenAI Adapter
+description: Use OpenAI models (GPT-4o, GPT-3.5) with Tekimax.
+---
+
+# OpenAI Adapter
+
+The `tekimax-openai` package enables support for OpenAI's official API.
+
+## Installation
+
+```bash
+npm install tekimax-openai
+```
+
+## Usage
+
+```typescript
+import { Tekimax } from 'tekimax-ts';
+import { OpenAIProvider } from 'tekimax-openai';
+
+const client = new Tekimax({
+  provider: new OpenAIProvider({
+    apiKey: process.env.OPENAI_API_KEY,
+    // organization: 'org-...' // Optional
+  })
+});
+
+const result = await client.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: 'Hello OpenAI' }]
+});
+```
+
+## Supported Models
+
+- `gpt-4o`
+- `gpt-4-turbo`
+- `gpt-3.5-turbo`
+- Any valid OpenAI model string.

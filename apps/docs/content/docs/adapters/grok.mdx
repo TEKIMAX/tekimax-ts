@@ -1,0 +1,32 @@
+---
+title: xAI Grok Adapter
+description: Use Grok-1 and Grok-2 models via xAI API.
+---
+
+# Grok Adapter
+
+The `tekimax-grok` package provides an interface for xAI's Grok models. Note that Grok uses an API signature compatible with OpenAI, so this adapter is optimized for xAI's specific quirks and base URLs.
+
+## Installation
+
+```bash
+npm install tekimax-grok
+```
+
+## Usage
+
+```typescript
+import { Tekimax } from 'tekimax-ts';
+import { GrokProvider } from 'tekimax-grok';
+
+const client = new Tekimax({
+  provider: new GrokProvider({
+    apiKey: process.env.XAI_API_KEY,
+  })
+});
+
+const result = await client.chat.completions.create({
+  model: 'grok-beta',
+  messages: [{ role: 'user', content: 'What is the meaning of life, the universe, and everything?' }]
+});
+```

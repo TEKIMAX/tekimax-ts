@@ -1,0 +1,64 @@
+---
+title: Security
+description: Hardened supply chain, zero-CVE artifacts, and runtime protection measures.
+---
+
+# Security & Compliance
+
+Tekimax SDK is designed with a "Secure by Default" philosophy, leveraging modern supply chain security practices to ensure integrity from build to runtime.
+
+## Supply Chain Hardening
+
+### Chainguard Images
+Our runtime and build artifacts are based on [Chainguard Images](https://www.chainguard.dev/), which are:
+- **Minimal**: Stripped of operating system shell, package managers, and other unnecessary binaries.
+- **Hardened**: Designed to reduce the attack surface significantly.
+- **Zero CVEs**: Rebuilt daily to patch upstream vulnerabilities immediately.
+
+### Artifact Signing (Cosign)
+All build artifacts are signed using **Cosign** (part of the Sigstore project). This allows you to verify that the SDK code you are running is exactly what was built by our CI/CD pipeline, with no tampering.
+
+## Vulnerability Management
+
+### Continuous Scanning (Trivy)
+We employ **Trivy** in our CI/CD pipelines to continuously scan our dependencies and build artifacts for vulnerabilities.
+- **Frequency**: Every commit and nightly schedule.
+- **Policy**: Builds fail immediately if `CRITICAL` or `HIGH` vulnerabilities are detected.
+- **Scope**: Scans cover both OS-level packages and Node.js/npm dependencies.
+
+## Runtime Protection
+
+### Type Safety & Validation (Zod)
+Unlike standard SDKs, Tekimax enforces strict runtime validation using **Zod** schemas.
+- **Spec-Driven**: All schemas are **generated directly from the OpenAPI specification**, ensuring 100% compliance with the API contract.
+- **Input Validation**: Malformed requests are rejected before they leave your application.
+- **Output Sanitization**: Unexpected responses from upstream providers are caught and handled gracefully.
+
+### Strict TypeScript Configuration
+The SDK is built with the strictest TypeScript settings enabled to prevent common classes of bugs:
+- `strict: true`: Enables strict null checks and no implicit keys.
+- `noUncheckedIndexedAccess: true`: Forces developers to handle cases where array/object access might return `undefined`, preventing runtime crashes.
+
+### Minimal Dependency Footprint
+We aggressively minimize third-party dependencies to reduce the potential attack surface.
+- **Core Dependencies**: Only `zod` (validation) and `eventsource-parser` (streaming) are used in the core runtime.
+- **Zero bloat**: No heavy frameworks or unused utility libraries.
+
+### Configuration Best Practices
+Never hardcode API keys. The SDK is designed to read secrets from the environment automatically.
+
+```typescript
+// ✅ Good: Automatic Environment Loading
+const client = new Tekimax({
+  provider: new AnthropicProvider({
+     // Reads process.env.ANTHROPIC_KEY automatically
+  })
+});
+
+// ❌ Bad: Hardcoding Secrets
+const client = new Tekimax({
+  provider: new AnthropicProvider({
+    apiKey: "sk-..." // Do not do this
+  })
+});
+```

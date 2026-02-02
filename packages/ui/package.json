@@ -1,0 +1,49 @@
+{
+    "name": "@tekimax/ui",
+    "version": "0.1.0",
+    "description": "UI Components for Tekimax SDK",
+    "main": "./dist/index.js",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.js"
+        },
+        "./styles.css": "./dist/styles.css"
+    },
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsup src/index.ts --format cjs,esm --dts && npx tailwindcss -i ./src/styles.css -o ./dist/styles.css",
+        "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+        "lint": "eslint .",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "peerDependencies": {
+        "react": ">=19",
+        "react-dom": ">=19",
+        "tekimax-ts": "^0.1.7"
+    },
+    "devDependencies": {
+        "@types/react": "^19.0.0",
+        "@types/react-dom": "^19.0.0",
+        "autoprefixer": "^10.4.14",
+        "postcss": "^8.4.21",
+        "tailwindcss": "^3.3.0",
+        "tsup": "^8.0.0",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "class-variance-authority": "^0.7.0",
+        "clsx": "^2.0.0",
+        "lucide-react": "^0.460.0",
+        "tailwind-merge": "^2.0.0",
+        "tailwindcss-animate": "^1.0.7"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}

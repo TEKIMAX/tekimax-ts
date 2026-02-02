@@ -1,0 +1,38 @@
+---
+title: Google Gemini Adapter
+description: Use Google's Gemini Pro models with Tekimax.
+---
+
+# Gemini Adapter
+
+The `tekimax-gemini` package integrates with Google's Generative AI SDK (`@google/genai`).
+
+## Installation
+
+```bash
+npm install tekimax-gemini
+```
+
+## Usage
+
+```typescript
+import { Tekimax } from 'tekimax-ts';
+import { GeminiProvider } from 'tekimax-gemini';
+
+const client = new Tekimax({
+  provider: new GeminiProvider({
+    apiKey: process.env.GOOGLE_API_KEY,
+  })
+});
+
+const result = await client.chat.completions.create({
+  model: 'gemini-1.5-pro',
+  messages: [{ role: 'user', content: 'Hello Gemini' }]
+});
+```
+
+## Supported Models
+
+- `gemini-1.5-pro`
+- `gemini-1.5-flash`
+- `gemini-1.0-pro`

@@ -1,0 +1,43 @@
+---
+title: Introduction
+description: The Universal AI Adapter Layer provided by Tekimax SDK.
+---
+
+# Tekimax SDK
+
+**Tekimax SDK** is a type-safe, universal adapter for AI models. It standardizes the interface across major providers, allowing you to switch between OpenAI, Anthropic, Gemini, and local Ollama models without rewriting your application logic.
+
+## Key Features
+
+- **Universal Interface**: One API for chat completions, streaming, and tool calling.
+- **Type Safety**: Built with TypeScript and Zod for full runtime validation.
+- **Edge Ready**: Runs on Vercel Edge, Cloudflare Workers, and simplistic Node.js environments.
+- **Modular**: Install only the adapters you need.
+
+## Installation
+
+```bash
+npm install tekimax-ts
+```
+
+## Quick Start
+
+Initialize the client with your preferred provider.
+
+```typescript
+import { Tekimax } from 'tekimax-ts';
+import { OpenAIProvider } from 'tekimax-openai';
+
+const client = new Tekimax({
+  provider: new OpenAIProvider({
+    apiKey: process.env.OPENAI_API_KEY,
+  }),
+});
+
+const response = await client.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: 'Hello!' }],
+});
+
+console.log(response.choices[0].message.content);
+```
