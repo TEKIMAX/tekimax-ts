@@ -34,17 +34,7 @@ The **Tekimax SDK** solves the fragmentation of AI APIs. Instead of rewriting yo
 - **Edge Compatible**: Zero-dependency core designed for Vercel Edge, Cloudflare Workers, and simplistic Node.js environments.
 - **React Ready**: Includes `useChat` and `useCompletion` hooks for instant UI integration.
 
-## 📦 Package Ecosystem
 
-| Package | Description | Version |
-|---------|-------------|---------|
-| **[`tekimax-ts`](./packages/tekimax-ts)** | Core Interface, Types, and React Hooks. | [![npm](https://img.shields.io/npm/v/tekimax-ts)](https://www.npmjs.com/package/tekimax-ts) |
-| **[`tekimax-openai`](./packages/tekimax-openai)** | Adapter for OpenAI (GPT-4o, etc). | [![npm](https://img.shields.io/npm/v/tekimax-openai)](https://www.npmjs.com/package/tekimax-openai) |
-| **[`tekimax-anthropic`](./packages/tekimax-anthropic)** | Adapter for Anthropic (Claude 3.5 Sonnet). | [![npm](https://img.shields.io/npm/v/tekimax-anthropic)](https://www.npmjs.com/package/tekimax-anthropic) |
-| **[`tekimax-gemini`](./packages/tekimax-gemini)** | Adapter for Google Gemini (Pro 1.5). | [![npm](https://img.shields.io/npm/v/tekimax-gemini)](https://www.npmjs.com/package/tekimax-gemini) |
-| **[`tekimax-ollama`](./packages/tekimax-ollama)** | Adapter for Local Ollama models. | [![npm](https://img.shields.io/npm/v/tekimax-ollama)](https://www.npmjs.com/package/tekimax-ollama) |
-| **[`tekimax-grok`](./packages/tekimax-grok)** | Adapter for xAI Grok. | [![npm](https://img.shields.io/npm/v/tekimax-grok)](https://www.npmjs.com/package/tekimax-grok) |
-| **[`tekimax-openrouter`](./packages/tekimax-openrouter)** | Adapter for OpenRouter (Aggregator). | [![npm](https://img.shields.io/npm/v/tekimax-openrouter)](https://www.npmjs.com/package/tekimax-openrouter) |
 
 ## 💻 Installation
 
