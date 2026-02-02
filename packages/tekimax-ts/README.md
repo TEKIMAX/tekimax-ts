@@ -1,7 +1,8 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/TEKIMAX/tekimax-ts/main/apps/docs/public/tekimax-logo.png" alt="Tekimax SDK Logo" width="200" />
   <h1>Tekimax TS</h1>
-  <p><strong>A type-safe, framework-agnostic AI SDK for building AI-powered apps.</strong></p>
+  <p><strong>Universal AI Adapter Layer.</strong></p>
+  <p>A type-safe, framework-agnostic AI SDK for building AI-powered apps.</p>
 
 [![npm version](https://img.shields.io/npm/v/tekimax-ts.svg)](https://www.npmjs.com/package/tekimax-ts)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -12,7 +13,15 @@
 
 ```bash
 npm install tekimax-ts
-```
+
+## 🌟 Features
+
+- **Universal API**: One interface for all providers. Switch from OpenAI to Ollama with a single config change.
+- **Type Safety**: End-to-end TypeScript support. Zod schemas for runtime validation.
+- **Zero Latency**: Lightweight adapter pattern with zero runtime overhead.
+- **Zero CVEs**: Hardened supply chain using Chainguard images.
+
+## 💻 Usage
 
 ## 💻 Usage
 
@@ -21,10 +30,27 @@ npm install tekimax-ts
 The `Tekimax` client is the unified entry point. It wraps any provider (OpenAI, Anthropic, Ollama, etc.) and exposes a consistent multi-modal interface.
 
 ```typescript
-import { Tekimax, OpenAIProvider } from 'tekimax-ts'
+import { 
+  Tekimax, 
+  OpenAIProvider, 
+  AnthropicProvider, 
+  OllamaProvider,
+  GeminiProvider 
+} from 'tekimax-ts'
 
+// OpenAI
 const client = new Tekimax({
     provider: new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY })
+})
+
+// Anthropic
+const claude = new Tekimax({
+    provider: new AnthropicProvider({ apiKey: process.env.ANTHROPIC_API_KEY })
+})
+
+// Ollama (Local)
+const local = new Tekimax({
+    provider: new OllamaProvider({ baseUrl: 'http://localhost:11434' })
 })
 ```
 
