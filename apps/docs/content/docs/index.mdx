@@ -1,18 +1,39 @@
 ---
 title: Introduction
-description: The Universal AI Adapter Layer provided by Tekimax SDK.
+description: The primitive layer for secure, multi-modal AI.
 ---
 
-# Tekimax SDK
+import { Shield, Zap, Lock, Box, Code2, Globe, Cpu, Key } from 'lucide-react';
+import { Card, Cards } from 'fumadocs-ui/components/card';
 
-**Tekimax SDK** is a type-safe, universal adapter for AI models. It standardizes the interface across major providers, allowing you to switch between OpenAI, Anthropic, Gemini, and local Ollama models without rewriting your application logic.
+<div className="flex items-center gap-4 not-prose mb-8">
+  <img src="/tekimax-logo.png" width="64" height="64" alt="Tekimax Logo" className="dark:hidden block" />
+  <img src="/tekimax-logo.png" width="64" height="64" alt="Tekimax Logo" className="hidden dark:block" />
+  <div className="flex flex-col">
+    <span className="text-xl font-bold">The primitive layer for secure AI</span>
+    <span className="text-muted-foreground">All providers. Zero CVEs. One interface.</span>
+  </div>
+</div>
 
-## Key Features
+**Tekimax** is a unified interface for secure, multi-modal AI. It provides a consistent, type-safe API across all major providers while guaranteeing a hardened software supply chain.
 
-- **Universal Interface**: One API for chat completions, streaming, and tool calling.
-- **Type Safety**: Built with TypeScript and Zod for full runtime validation.
-- **Edge Ready**: Runs on Vercel Edge, Cloudflare Workers, and simplistic Node.js environments.
-- **Modular**: Install only the adapters you need.
+## Why Tekimax?
+
+-   **Security First**: Built on **Chainguard** images with a verified build pipeline. Zero CVEs.
+-   **Unified Interface**: Switch between OpenAI, Anthropic, Gemini, and Ollama with a single line of code.
+-   **Type-Safe**: Full IDE support with Zod schemas for every request and response.
+-   **No Vendor Lock-in**: Decouple your application logic from specific AI provider SDKs.
+
+## Supported Providers
+
+<Cards>
+  <Card icon={<Cpu />} href="/docs/adapters/anthropic" title="Anthropic" />
+  <Card icon={<Cpu />} href="/docs/adapters/gemini" title="Google Gemini" />
+  <Card icon={<Cpu />} href="/docs/adapters/ollama" title="Ollama" />
+  <Card icon={<Cpu />} href="/docs/adapters/openai" title="OpenAI" />
+  <Card icon={<Globe />} href="/docs/adapters/grok" title="xAI (Grok)" />
+  <Card icon={<Globe />} href="/docs/adapters/openrouter" title="OpenRouter" />
+</Cards>
 
 ## Installation
 
@@ -25,18 +46,20 @@ npm install tekimax-ts
 Initialize the client with your preferred provider.
 
 ```typescript
-import { Tekimax } from 'tekimax-ts';
-import { OpenAIProvider } from 'tekimax-openai';
+import { Tekimax, OpenAIProvider } from 'tekimax-ts';
 
-const client = new Tekimax({
-  provider: new OpenAIProvider({
-    apiKey: process.env.OPENAI_API_KEY,
-  }),
+// 1. Configure the Provider
+const provider = new OpenAIProvider({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-const response = await client.chat.completions.create({
+// 2. Initialize the Client
+const client = new Tekimax({ provider });
+
+// 3. Chat (Text Modality)
+const response = await client.text.chat.completions.create({
   model: 'gpt-4o',
-  messages: [{ role: 'user', content: 'Hello!' }],
+  messages: [{ role: 'user', content: 'Hello World!' }],
 });
 
 console.log(response.choices[0].message.content);

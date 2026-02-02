@@ -25,7 +25,7 @@
     "peerDependencies": {
         "react": ">=19",
         "react-dom": ">=19",
-        "tekimax-ts": "^0.1.7"
+        "tekimax-ts": "^1.0.0-beta.1"
     },
     "devDependencies": {
         "@types/react": "^19.0.0",

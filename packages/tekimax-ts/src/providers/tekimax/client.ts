@@ -158,7 +158,7 @@ export class TekimaxClient {
   /**
    * Creates a new session and sends the initial message.
    *
-   * @param message - The initial message text to start the session.
+   * @param message - The initial message text or array of message items to start the session.
    * @param options - Additional configuration options (model, temperature, etc.).
    *
    * @example
@@ -166,12 +166,12 @@ export class TekimaxClient {
    * console.log(response.text);
    */
   async createSession(
-    message: string,
+    message: string | any[],
     options?: MessageOptions,
   ): Promise<TekimaxResponse> {
     const body: CreateResponseBody = {
       ...options,
-      input: message,
+      input: message as any,
     }
     // Remove signal from body if present (spread copies it)
     const { signal } = options || {}
@@ -184,7 +184,7 @@ export class TekimaxClient {
   /**
    * Sends a message to an existing session or starts a new one if no previous_response_id is provided.
    *
-   * @param message - The message text to send.
+   * @param message - The message text or history array to send.
    * @param options - Additional configuration options.
    *
    * @example
@@ -194,13 +194,13 @@ export class TekimaxClient {
    * console.log(response.text);
    */
   async sendMessage(
-    message: string,
+    message: string | any[],
     options?: MessageOptions,
   ): Promise<TekimaxResponse> {
     // Force stream: false for non-streaming calls
     const body: CreateResponseBody = {
       ...options,
-      input: message,
+      input: message as any,
       stream: false
     }
     const { signal } = options || {}
@@ -214,12 +214,12 @@ export class TekimaxClient {
    * Sends a message and returns an asynchronous iterable of streaming events.
    */
   async *sendMessageStream(
-    message: string,
+    message: string | any[],
     options?: MessageOptions
   ): AsyncIterable<any> {
     const body: CreateResponseBody = {
       ...options,
-      input: message,
+      input: message as any,
       stream: true
     }
     const { signal } = options || {}

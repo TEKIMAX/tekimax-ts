@@ -10,14 +10,14 @@ The `tekimax-openrouter` package allows you to use OpenRouter as a gateway to vi
 ## Installation
 
 ```bash
-npm install tekimax-openrouter
+npm install tekimax-ts
 ```
 
 ## Usage
 
 ```typescript
 import { Tekimax } from 'tekimax-ts';
-import { OpenRouterProvider } from 'tekimax-openrouter';
+import { OpenRouterProvider } from 'tekimax-ts';
 
 const client = new Tekimax({
   provider: new OpenRouterProvider({
@@ -27,7 +27,7 @@ const client = new Tekimax({
   })
 });
 
-const result = await client.chat.completions.create({
+const result = await client.text.chat.completions.create({
   model: 'nousresearch/hermes-2-pro-llama-3-8b',
   messages: [{ role: 'user', content: 'Hello OpenRouter' }]
 });

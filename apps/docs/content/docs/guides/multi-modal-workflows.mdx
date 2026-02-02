@@ -1,0 +1,77 @@
+---
+title: Multi-Modal Workflows
+description: Combine Text, Image, Audio, and Video for complex workflows.
+---
+
+One of Tekimax's strengths is the ability to combine different modalities using a consistent interface.
+
+---
+
+## Text to Image
+
+Generate an image based on a detailed description created by an LLM.
+
+```typescript
+import { Tekimax, OpenAIProvider } from 'tekimax-ts';
+
+const client = new Tekimax({ provider: new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY }) });
+
+// 1. Generate prompt (domain: text)
+const promptResponse = await client.text.chat.completions.create({
+  model: "gpt-4o",
+  messages: [{ role: "user", content: "Describe a surreal landscape with floating islands in 2 sentences." }],
+});
+
+const imagePrompt = promptResponse.content;
+console.log(`Generating image for: ${imagePrompt}`);
+
+// 2. Generate image (domain: images)
+const imageResponse = await client.images.generate({
+    model: "dall-e-3",
+    prompt: imagePrompt,
+    quality: "hd"
+});
+
+// 3. Output URL
+console.log(imageResponse.data[0].url);
+```
+
+---
+
+## Image to Text (Vision)
+
+Analyze an image using a vision model. This uses the `images` domain, but the output modality is text.
+
+```typescript
+// Analyze (domain: images, output: text)
+const description = await client.images.analyze({
+    model: "gpt-4o",
+    prompt: "What colors are dominant in this image?",
+    image: "https://example.com/surreal_islands.png"
+});
+
+console.log(description.content);
+```
+
+---
+
+## Text to Speech
+
+Read out generated text.
+
+```typescript
+// 1. Generate Story
+const story = await client.text.chat.completions.create({
+    model: "gpt-4o",
+    messages: [{ role: "user", content: "Tell a very short story." }]
+});
+
+// 2. Convert to Speech
+const audio = await client.audio.speak({
+    model: "tts-1",
+    input: story.content,
+    voice: "alloy"
+});
+
+console.log(`Generated ${audio.buffer.byteLength} bytes of audio.`);
+```

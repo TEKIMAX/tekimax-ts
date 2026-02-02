@@ -1,0 +1,79 @@
+---
+title: Reasoning Models
+description: How to use "Thinking" models like DeepSeek R1 with Tekimax SDK.
+---
+
+# Reasoning Models
+
+The Tekimax SDK provides first-class support for **Reasoning Models** (also known as "Thinking" models), such as DeepSeek R1 and newer OpenAI o-series models.
+
+These models expose their internal "chain of thought" process, allowing you to display the reasoning steps to the user before the final answer is generated.
+
+## Enabling Thinking
+
+To enable reasoning, simply pass `think: true` in your chat options.
+
+```typescript
+const response = await client.text.chat.completions.create({
+  model: 'deepseek-r1',
+  messages: [{ role: 'user', content: 'Solve this logic puzzle...' }],
+  think: true // Enable reasoning capture
+});
+```
+
+## Accessing Reasoning Data
+
+The reasoning content is available in the `thinking` field of the message.
+
+```typescript
+const thinking = response.choices[0].message.thinking;
+const content = response.choices[0].message.content;
+
+console.log('--- Reasoning ---');
+console.log(thinking);
+console.log('--- Answer ---');
+console.log(content);
+```
+
+### Streaming Support
+
+Thinking is also supported in streaming mode. The `thinking` delta will be emitted as the model "thinks".
+
+```typescript
+const stream = await client.text.chat.completions.createStream({
+  model: 'deepseek-r1',
+  think: true,
+  // ...
+});
+
+for await (const chunk of stream) {
+  if (chunk.thinking) {
+    process.stdout.write(chunk.thinking); // Stream reasoning
+  }
+  if (chunk.delta) {
+    process.stdout.write(chunk.delta); // Stream answer
+  }
+}
+```
+
+## Provider Support
+
+| Provider | Native Support | Implementation Details |
+| :--- | :--- | :--- |
+| **Ollama** | ✅ Yes | Uses native `thinking` field from Ollama API. |
+| **OpenAI** | 🚧 Partial | Models like `o1` encapsulate reasoning; extraction depends on model version. |
+| **Generic** | 🔄 Emulated | For models that output `<think>` tags (like DeepSeek via non-native API), the SDK creates a unified `thinking` field. |
+
+## Utility: Parsing Raw Thinking
+
+If you are using a provider that outputs raw `<think>` tags in the content instead of a structured field, the SDK provides a utility to parse it.
+
+```typescript
+import { parseThinking } from 'tekimax-ts';
+
+const rawContent = "<think>Calculating...</think> The answer is 42.";
+const { think, rest } = parseThinking(rawContent);
+
+console.log(think); // "Calculating..."
+console.log(rest);  // " The answer is 42."
+```

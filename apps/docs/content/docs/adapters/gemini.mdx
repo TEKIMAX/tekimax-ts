@@ -10,14 +10,14 @@ The `tekimax-gemini` package integrates with Google's Generative AI SDK (`@googl
 ## Installation
 
 ```bash
-npm install tekimax-gemini
+npm install tekimax-ts
 ```
 
 ## Usage
 
 ```typescript
 import { Tekimax } from 'tekimax-ts';
-import { GeminiProvider } from 'tekimax-gemini';
+import { GeminiProvider } from 'tekimax-ts';
 
 const client = new Tekimax({
   provider: new GeminiProvider({
@@ -25,14 +25,9 @@ const client = new Tekimax({
   })
 });
 
-const result = await client.chat.completions.create({
+const result = await client.text.chat.completions.create({
   model: 'gemini-1.5-pro',
   messages: [{ role: 'user', content: 'Hello Gemini' }]
 });
 ```
 
-## Supported Models
-
-- `gemini-1.5-pro`
-- `gemini-1.5-flash`
-- `gemini-1.0-pro`

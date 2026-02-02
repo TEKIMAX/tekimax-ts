@@ -7,20 +7,28 @@ description: Understanding the Tekimax Client and Provider architecture.
 
 The Tekimax SDK is built around two main primitives: the `Tekimax` client and the `AIProvider` interface.
 
-## The Tekimax Client
+## The Client
 
-The `Tekimax` class is the main entry point. It handles:
-- Request validation.
-- Response normalization.
-- Error handling.
-- Streaming logic.
+The `Tekimax` client is the unified entry point. It organizes capabilities into **Namespaces**.
 
 ```typescript
-import { Tekimax } from 'tekimax-ts';
+const client = new Tekimax({ provider });
 
-const client = new Tekimax({
-  provider: /* ... */,
-  baseURL: 'https://api.your-proxy.com', // Optional override
+// Namespaces
+client.text   // Chat, Embeddings
+client.images // Generation, Editing, Analysis
+client.audio  // Text-to-Speech (TTS)
+client.videos // Generation, Analysis
+```
+
+### Text (Chat)
+
+The `client.text` namespace provides a standard chat completion interface.
+
+```typescript
+const response = await client.text.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: 'Hello!' }]
 });
 ```
 
@@ -47,7 +55,7 @@ interface AIProvider {
 Streaming is handled automatically. If you set `stream: true`, the client returns an AsyncIterable.
 
 ```typescript
-const stream = await client.chat.completions.create({
+const stream = await client.text.chat.completions.create({
   model: 'gpt-4o',
   messages: [
     { role: 'user', content: 'Tell me a story' }
@@ -70,25 +78,39 @@ If you are using React, we provide built-in hooks for instant integration.
 import { useChat } from 'tekimax-ts/react';
 ```
 
-See the [React Integration](/docs/react) guide for more details.
+See the [React Integration](/docs/guides/react) guide for more details.
 
-## Tekimax Native Adapter
+## Universal Features
 
-The `tekimax` provider is a special adapter designed to work with the Tekimax Inference Engine (OpenResponse). It supports advanced features like native tool calling and multimodal inputs.
+The SDK normalizes advanced features across all providers (OpenAI, Anthropic, Gemini, Ollama), ensuring a consistent API experience.
+
+### Reasoning (Thinking)
+
+Support for "Thinking" models (like DeepSeek R1) is built-in. Use the `think: true` parameter to capture reasoning traces.
+
+```typescript
+const response = await client.text.chat.completions.create({
+  model: 'deepseek-r1',
+  messages: [...],
+  think: true
+});
+
+console.log(response.choices[0].message.thinking); // Access reasoning
+```
+
+See the [Reasoning Models](/docs/guides/thinking) guide for more details.
 
 ### Tool Calling
 
-The adapter automatically flattens tool definitions to match the OpenResponse spec.
+Tool calling is standardized. You define tools once, and the SDK handles the specific format for each provider (e.g., mapping to Gemini's `functionDeclarations` or Anthropic's `tool_use`).
 
 ```typescript
 const client = new Tekimax({
-  provider: new TekimaxProvider({
-    baseUrl: 'https://api.your-inference-engine.com'
-  })
+  provider: new GeminiProvider({ apiKey: '...' }) // Works with Anthropic, OpenAI, etc.
 });
 
-const response = await client.chat.completions.create({
-  model: 'meta-llama/Llama-2-70b-chat',
+const response = await client.text.chat.completions.create({
+  model: 'gemini-pro',
   messages: [{ role: 'user', content: 'What is the weather in Tokyo?' }],
   tools: [{
     type: 'function',
@@ -104,13 +126,9 @@ const response = await client.chat.completions.create({
   }]
 });
 
-// Access tool calls
+// Uniform access to tool calls
 const toolCalls = response.choices[0].message.tool_calls;
 if (toolCalls) {
   console.log(toolCalls[0].function.name); // "get_weather"
 }
 ```
-
-### OpenResponse Format
-
-Under the hood, this adapter communicates using the [OpenResponse](https://www.openresponses.org/) standard. It maps standard OpenAI-compatible requests into the OpenResponse `Message` and `Item` format, ensuring compatibility with any OpenResponse-compliant backend.

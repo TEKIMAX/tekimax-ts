@@ -1,0 +1,106 @@
+---
+title: Modalities (Multi-Modal)
+description: Unified interface for Text, Images, Audio, and Video.
+---
+
+import { Image, Mic, Video, Type } from 'lucide-react';
+import { Card, Cards } from 'fumadocs-ui/components/card';
+
+Tekimax organizes AI capabilities into four distinct **modalities**, matching the architecture of the [Celeste SDK](https://github.com/tekimax/celeste-sdk). Ensure your provider supports the modality you are calling.
+
+<Cards>
+  <Card icon={<Type />} href="#text-chat" title="Text" description="Chat, Completions, and Embeddings" />
+  <Card icon={<Image />} href="#images" title="Images" description="Generation and Editing" />
+  <Card icon={<Mic />} href="#audio" title="Audio" description="Text-to-Speech (TTS)" />
+  <Card icon={<Video />} href="#video" title="Video" description="Video Generation" />
+</Cards>
+
+---
+
+## Text (Chat)
+
+The `client.text` namespace handles all Language Model interactions.
+
+```typescript
+import { Tekimax, OpenAIProvider } from 'tekimax-ts';
+
+const client = new Tekimax({ provider: new OpenAIProvider({ apiKey: '...' }) });
+
+const response = await client.text.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: 'Explain quantum computing' }],
+});
+
+console.log(response.content);
+```
+
+---
+
+## Images
+
+The `client.images` namespace unifies image generation (e.g., DALL-E) and editing.
+
+```typescript
+// Generate an image
+const result = await client.images.generate({
+  prompt: 'A futuristic city with flying cars, cyberpunk style',
+  model: 'dall-e-3',
+  size: '1024x1024'
+});
+
+console.log(result.data[0].url);
+```
+
+---
+
+## Audio
+
+The `client.audio` namespace provides Text-to-Speech (TTS) capabilities.
+
+```typescript
+import { Tekimax, OpenAIProvider } from 'tekimax-ts';
+
+const client = new Tekimax({
+    provider: new OpenAIProvider({ apiKey: '...' }) 
+});
+
+// Convert text to speech
+const audio = await client.audio.speak({
+  model: 'tts-1',
+  input: 'Hello, this is a generated voice.',
+  voice: 'alloy',
+});
+
+// Returns an ArrayBuffer
+console.log(`Generated ${audio.buffer.byteLength} bytes of audio`);
+```
+
+---
+
+## Video
+
+The `client.videos` namespace handles video generation.
+
+```typescript
+// Generate a video from a prompt
+const video = await client.videos.generate({
+  prompt: 'A cat running in a field of sunflowers',
+  model: 'veo', // Google Veo
+});
+
+console.log(video.data[0].url);
+```
+
+### Video Analysis (Video-to-Text)
+
+You can also analyze video content.
+
+```typescript
+const analysis = await client.videos.analyze({
+    video: 'https://cdn.example.com/beach_sunset.mp4',
+    model: 'gpt-4o',
+    prompt: 'Describe the scene and the lighting conditions.'
+});
+
+console.log(analysis.content);
+```

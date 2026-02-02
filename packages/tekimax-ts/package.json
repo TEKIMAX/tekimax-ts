@@ -1,6 +1,6 @@
 {
     "name": "tekimax-ts",
-    "version": "1.0.0-beta.1",
+    "version": "0.1.2",
     "type": "module",
     "description": "A type-safe, framework-agnostic AI SDK for building AI-powered apps.",
     "homepage": "https://tekimax.com",
@@ -37,7 +37,8 @@
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "format": "prettier --write .",
-        "check:exports": "publint"
+        "check:exports": "publint",
+        "check:deps": "npx tsx ../../scripts/check-updates.ts"
     },
     "keywords": [
         "sdk",
@@ -54,8 +55,12 @@
         "access": "public"
     },
     "dependencies": {
+        "@anthropic-ai/sdk": "^0.72.1",
+        "@google/generative-ai": "^0.24.1",
         "eventsource-parser": "^3.0.6",
-        "zod": "^3.22.4"
+        "ollama": "^0.6.3",
+        "openai": "^6.17.0",
+        "zod": "^3.23.8"
     },
     "devDependencies": {
         "@kubb/cli": "^4.15.0",
@@ -66,6 +71,7 @@
         "@kubb/plugin-zod": "^4.15.0",
         "@tanstack/eslint-config": "^0.3.4",
         "@types/react": "^19.2.10",
+        "cac": "^6.7.14",
         "eslint": "^9.39.2",
         "eslint-plugin-unused-imports": "^4.3.0",
         "prettier": "^3.8.1",
@@ -75,6 +81,6 @@
         "typescript": "^5.3.3"
     },
     "peerDependencies": {
-        "react": "^19.2.4"
+        "react": "^19.0.0"
     }
 }

@@ -1,6 +1,7 @@
 import { TekimaxClient } from './client'
 import type { AIProvider } from '../../core/adapter'
 import type { ChatOptions, ChatResult, Message, StreamChunk, ToolCall } from '../../core/types'
+import type { ItemParam, UserMessageItemParam, AssistantMessageItemParam } from '../../gen/types'
 
 export class TekimaxProvider implements AIProvider {
     name = 'tekimax'
@@ -19,7 +20,10 @@ export class TekimaxProvider implements AIProvider {
             parameters: t.function.parameters as any ?? undefined,
         }))
 
-        const response = await this.client.sendMessage(this.getLastUserMessage(options.messages), {
+        // Map full history for stateless execution
+        const input = this.mapMessages(options.messages)
+
+        const response = await this.client.sendMessage(input, {
             model: options.model,
             temperature: options.temperature,
             max_output_tokens: options.maxTokens,
@@ -83,7 +87,10 @@ export class TekimaxProvider implements AIProvider {
             parameters: t.function.parameters as any ?? undefined,
         }))
 
-        const stream = this.client.sendMessageStream(this.getLastUserMessage(options.messages), {
+        // Map full history for stateless execution
+        const input = this.mapMessages(options.messages)
+
+        const stream = this.client.sendMessageStream(input, {
             model: options.model,
             temperature: options.temperature,
             max_output_tokens: options.maxTokens,
@@ -100,9 +107,30 @@ export class TekimaxProvider implements AIProvider {
         }
     }
 
-    private getLastUserMessage(messages: Array<Message>): string {
-        const lastUser = messages.slice().reverse().find(m => m.role === 'user')
-        return lastUser?.content || ''
+    // Returning any[] because generated ItemParam union is missing UserMessageItemParam
+    private mapMessages(messages: Array<Message>): Array<any> {
+        const items: Array<any> = []
+
+        for (const msg of messages) {
+            if (msg.role === 'user') {
+                items.push({
+                    type: 'message',
+                    role: 'user',
+                    content: msg.content || ''
+                } as UserMessageItemParam)
+            } else if (msg.role === 'assistant') {
+                if (msg.content) {
+                    items.push({
+                        type: 'message',
+                        role: 'assistant',
+                        content: [{ type: 'output_text', text: msg.content }]
+                    } as AssistantMessageItemParam)
+                }
+                // Handle tool calls in history if needed, but for now focusing on text
+            }
+        }
+
+        return items
     }
 }
 

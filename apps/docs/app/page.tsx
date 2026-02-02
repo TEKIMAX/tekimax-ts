@@ -37,7 +37,7 @@ export default function HomePage() {
       links={[
         {
           text: 'Documentation',
-          url: '/docs/core',
+          url: '/docs',
           active: 'nested-url',
         },
         {

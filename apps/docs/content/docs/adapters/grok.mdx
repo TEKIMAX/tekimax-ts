@@ -10,14 +10,14 @@ The `tekimax-grok` package provides an interface for xAI's Grok models. Note tha
 ## Installation
 
 ```bash
-npm install tekimax-grok
+npm install tekimax-ts
 ```
 
 ## Usage
 
 ```typescript
 import { Tekimax } from 'tekimax-ts';
-import { GrokProvider } from 'tekimax-grok';
+import { GrokProvider } from 'tekimax-ts';
 
 const client = new Tekimax({
   provider: new GrokProvider({
@@ -25,7 +25,7 @@ const client = new Tekimax({
   })
 });
 
-const result = await client.chat.completions.create({
+const result = await client.text.chat.completions.create({
   model: 'grok-beta',
   messages: [{ role: 'user', content: 'What is the meaning of life, the universe, and everything?' }]
 });

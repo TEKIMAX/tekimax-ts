@@ -10,22 +10,35 @@ The `tekimax-ollama` package connects to a local Ollama instance (default port `
 ## Installation
 
 ```bash
-npm install tekimax-ollama
+npm install tekimax-ts
 ```
 
 ## Usage
 
 ```typescript
 import { Tekimax } from 'tekimax-ts';
-import { OllamaProvider } from 'tekimax-ollama';
+import { OllamaProvider } from 'tekimax-ts';
 
 const client = new Tekimax({
   provider: new OllamaProvider({
-    baseUrl: 'http://127.0.0.1:11434/api', // Default
+    host: 'http://127.0.0.1:11434', // Local Default
+  })
+});
+```
+
+## Authentication & Cloud Support
+
+You can connect to a remote Ollama instance (e.g., behind a reverse proxy or Ollama Cloud) by providing an `apiKey`. This adds an `Authorization: Bearer <key>` header to requests.
+
+```typescript
+const client = new Tekimax({
+  provider: new OllamaProvider({
+    host: 'https://your-ollama-instance.com',
+    apiKey: 'ollama_key_...' // Optional: Adds Bearer Token
   })
 });
 
-const result = await client.chat.completions.create({
+const result = await client.text.chat.completions.create({
   model: 'llama3', // Must be pulled in Ollama first (`ollama pull llama3`)
   messages: [{ role: 'user', content: 'Why is the sky blue?' }]
 });
@@ -36,7 +49,7 @@ const result = await client.chat.completions.create({
 Local models support streaming out of the box with the standard interface.
 
 ```typescript
-const stream = await client.chat.completions.create({
+const stream = await client.text.chat.completions.create({
   model: 'mistral',
   messages: [{ role: 'user', content: 'Count to 10 efficiently.' }],
   stream: true

@@ -1,0 +1,12 @@
+{
+    "pages": [
+        "index",
+        "core",
+        "modalities",
+        "security",
+        "adapters",
+        "guides",
+        "error-handling",
+        "changelog"
+    ]
+}

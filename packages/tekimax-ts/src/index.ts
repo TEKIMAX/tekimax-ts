@@ -1,9 +1,17 @@
 export * from './core/types'
 export * from './core/adapter'
 export * from './providers/tekimax'
+export * from './providers/anthropic'
+export * from './providers/gemini'
+export * from './providers/ollama'
+export * from './providers/openai'
+export * from './providers/grok'
+export * from './providers/openrouter'
 
 // Export Generated Types with aliases to avoid conflicts
 export * as ApiTypes from './gen/types'
 
 export * from './core/tool'
 export * from './core/generate'
+export * from './core/utils'
+export * from './tekimax'

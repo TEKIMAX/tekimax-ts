@@ -40,7 +40,11 @@ export async function generateText({
         // If no tool calls, we are done
         if (!message.toolCalls || message.toolCalls.length === 0) {
             return {
-                text: message.content || '',
+                text: typeof message.content === 'string'
+                    ? message.content || ''
+                    : Array.isArray(message.content)
+                        ? message.content.filter(p => p.type === 'text').map(p => (p as any).text).join('')
+                        : '',
                 toolCalls: [],
                 toolResults: [],
                 finishReason: 'stop',

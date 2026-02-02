@@ -10,14 +10,14 @@ The `tekimax-openai` package enables support for OpenAI's official API.
 ## Installation
 
 ```bash
-npm install tekimax-openai
+npm install tekimax-ts
 ```
 
 ## Usage
 
 ```typescript
 import { Tekimax } from 'tekimax-ts';
-import { OpenAIProvider } from 'tekimax-openai';
+import { OpenAIProvider } from 'tekimax-ts';
 
 const client = new Tekimax({
   provider: new OpenAIProvider({
@@ -26,15 +26,9 @@ const client = new Tekimax({
   })
 });
 
-const result = await client.chat.completions.create({
+const result = await client.text.chat.completions.create({
   model: 'gpt-4o',
   messages: [{ role: 'user', content: 'Hello OpenAI' }]
 });
 ```
 
-## Supported Models
-
-- `gpt-4o`
-- `gpt-4-turbo`
-- `gpt-3.5-turbo`
-- Any valid OpenAI model string.

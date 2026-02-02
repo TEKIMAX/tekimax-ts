@@ -16,119 +16,76 @@ npm install tekimax-ts
 
 ## 💻 Usage
 
-### Standard Provider Pattern (Recommended)
+### 1. Initialize the Client
 
-The SDK provides a `TekimaxProvider` that implements the standard `TekimaxAdapter` interface. This allows for interchangeable providers and consistent behavior.
-
-```typescript
-import { TekimaxProvider } from 'tekimax-ts'
-
-const provider = new TekimaxProvider({
-  apiKey: process.env.TEKIMAX_API_KEY,
-})
-
-// Standard Chat
-const result = await provider.chat({
-  model: 'gpt-4',
-  messages: [{ role: 'user', content: 'Explain quantum computing' }]
-})
-console.log(result.message.content)
-
-// Streaming Chat
-for await (const chunk of provider.chatStream({
-  model: 'gpt-4',
-  messages: [{ role: 'user', content: 'Write a long poem' }]
-})) {
-  process.stdout.write(chunk.delta)
-}
-```
-
-### Agents & Tools
-
-The SDK supports high-level "Agentic" workflows where the model can autonomously call tools.
+The `Tekimax` client is the unified entry point. It wraps any provider (OpenAI, Anthropic, Ollama, etc.) and exposes a consistent multi-modal interface.
 
 ```typescript
-import { TekimaxProvider, generateText, tool } from 'tekimax-ts'
+import { Tekimax, OpenAIProvider } from 'tekimax-ts'
 
-const provider = new TekimaxProvider({ apiKey: '...' })
-
-const weatherTool = tool({
-  type: 'function', // optional, defaults to 'function' in helper
-  function: {
-    name: 'get_weather',
-    description: 'Get current weather',
-    parameters: {
-      type: 'object',
-      properties: {
-        location: { type: 'string' }
-      },
-      required: ['location']
-    }
-  },
-  execute: async ({ location }) => {
-    return { temperature: 72, condition: 'Sunny' }
-  }
+const client = new Tekimax({
+    provider: new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY })
 })
-
-const result = await generateText({
-  adapter: provider,
-  model: 'gpt-4',
-  messages: [{ role: 'user', content: 'What is the weather in SF?' }],
-  tools: { weather: weatherTool },
-  maxSteps: 5 // Allow up to 5 steps (Model -> Tool -> Model loop)
-})
-
-console.log(result.text) 
-// "The weather in San Francisco is sunny with a temperature of 72°F."
 ```
 
-```bash
-npm install react
-```
+### 2. Multi-Modal Interfaces
 
-Then import from `tekimax-ts/react`:
+The client is organized into cohesive namespaces:
 
-```tsx
-import { TekimaxProvider } from 'tekimax-ts'
-import { useChat } from 'tekimax-ts/react'
-
-const provider = new TekimaxProvider({ apiKey: '...' })
-
-function Chat() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, stop } = useChat({
-    adapter: provider,
-    model: 'gpt-4'
-  })
-
-  return (
-    <div>
-      {messages.map((m, i) => (
-        <div key={i}><strong>{m.role}:</strong> {m.content}</div>
-      ))}
-      
-      <form onSubmit={handleSubmit}>
-        <input value={input} onChange={handleInputChange} disabled={isLoading} />
-        <button type="submit" disabled={isLoading}>Send</button>
-        <button type="button" onClick={stop} disabled={!isLoading}>Stop</button>
-      </form>
-    </div>
-  )
-}
-```
-
-### Low-Level Client
-
-You can still use the direct `TekimaxClient` for raw API access if needed:
+#### Text (Chat)
 
 ```typescript
-import { TekimaxClient } from 'tekimax-ts'
-
-const client = new TekimaxClient({ apiKey: process.env.TEKIMAX_API_KEY })
-const response = await client.sendMessage('Hello!')
-console.log(response.text)
+const response = await client.text.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [{ role: 'user', content: 'Hello!' }]
+})
+console.log(response.message.content)
 ```
 
-## 🧠 Motivation and Overview
+#### Images (Generation & Vision)
+
+```typescript
+// Generate
+const image = await client.images.generate({
+    model: 'dall-e-3',
+    prompt: 'A cyberpunk city',
+    size: '1024x1024'
+})
+
+// Analyze (Vision)
+const analysis = await client.images.analyze({
+    model: 'gpt-4o',
+    image: 'https://example.com/image.png',
+    prompt: 'Describe this scene'
+})
+```
+
+#### Audio (TTS)
+
+```typescript
+const audio = await client.audio.speak({
+    model: 'tts-1',
+    input: 'Hello world',
+    voice: 'alloy'
+})
+```
+
+#### Video (Analysis)
+
+```typescript
+const analysis = await client.videos.analyze({
+    model: 'gemini-1.5-flash',
+    video: 'https://example.com/video.mp4',
+    prompt: 'Summarize this clip'
+})
+```
+
+## 📚 Documentation
+
+For full documentation, guides, and API references, visit **[docs.tekimax.com](https://docs.tekimax.com)**.
+
+## 🧠 Motivation
+
 
 Modern LLM systems have converged on similar primitives: messages, function calls, tool usage, and multimodal inputs but each provider encodes them differently. **Tekimax** standardizes these concepts, enabling:
 

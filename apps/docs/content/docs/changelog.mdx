@@ -1,0 +1,47 @@
+---
+title: Changelog
+description: Latest updates and changes to the Tekimax SDK.
+---
+
+# Changelog
+
+## v0.1.2 (Latest)
+
+### Tooling & Parity
+- **GeminiProvider**: Added full support for function calling (`tools` and `tool_choice`).
+- **AnthropicProvider**: Implemented response parsing for `tool_use` blocks.
+- **Parity**: Achieved tool calling parity across OpenAI, Ollama, Gemini, and Anthropic.
+
+### Browser Compatibility
+- **OllamaProvider**: Fixed `node:fs` externalization errors in Vite/Next.js by using `ollama/browser` for client-side builds.
+- **Utilities**: Added browser-safe `fileToBase64` helper.
+
+### Core Enhancements
+- **Reasoning**: Added `parseThinking` utility to handle `<think>` blocks from models like DeepSeek-R1.
+- **Exports**: Exposed `ToolDefinition` and `ToolCall` types from root.
+
+## v0.1.1 (Current)
+
+### Adapter Standardization
+- **TekimaxProvider**: Added support for **Stateless Mode** (full history mapping).
+- **OllamaProvider**: Added support for **Cloud Authentication** (`apiKey` option).
+- **Verified**: Consistency checks passed for Anthropic, Gemini, OpenAI, and internal adapters.
+
+### Documentation
+- Updated core documentation to reflect stateless capabilities.
+- Added usage examples for authenticated Ollama connections.
+- Removed stale "Supported Models" lists in favor of linking to official provider documentation.
+
+### Dependencies Updated
+- **openai**: `4.0.0` -> `4.73.0+` (Fixed v4.24 breaking change in `ToolCall` types).
+- **@anthropic-ai/sdk**: `0.33.1` -> `0.72.1`.
+- **@google/generative-ai**: `0.21.0` -> `0.24.1`.
+- **ollama**: `0.5.11` -> `0.6.3`.
+
+## v0.1.0 (Initial Release)
+
+### Features
+- **Monorepo Structure**: Migrated to Turborepo.
+- **Unified Client**: `Tekimax` client with `AIProvider` interface.
+- **Adapters**: Initial support for Anthropic, Gemini, Grok, Ollama, OpenAI, and OpenRouter.
+- **Docs**: Launched documentation site on Cloudflare Pages.
