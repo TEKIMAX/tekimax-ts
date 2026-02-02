@@ -13,6 +13,10 @@ RUN npm ci
 # Copy the source code
 COPY --chown=node:node . .
 
+# Explicitly ensure spec is copied (debugging context issues)
+COPY --chown=node:node spec ./spec
+RUN ls -la /app && ls -la /app/spec
+
 # Generate the SDK code from the OpenAPI spec
 RUN npm run generate
 
