@@ -31,8 +31,18 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'tekimax-ts:${{ github.sha }}'
+          # Output raw table to console
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
+          output: 'trivy-results.txt'
+
+      - name: Publish Trivy Output to Summary
+        if: always()
+        run: |
+          echo "### Security Scan Results 🛡️" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat trivy-results.txt >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
