@@ -1,5 +1,4 @@
-# Use Chainguard Node.js 'dev' image which includes build tools (npm, apk, etc.)
-# release chaimguard images are stripped of shells and package managers for security
+# Stage 1: Build in dev image (has npm, build tools)
 FROM cgr.dev/chainguard/node:latest-dev AS builder
 
 WORKDIR /app
@@ -8,12 +7,12 @@ WORKDIR /app
 COPY --chown=node:node package.json package-lock.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci --ignore-scripts
 
 # Copy the source code
 COPY --chown=node:node . .
 
-# Explicitly ensure spec is copied (debugging context issues)
+# Explicitly ensure spec is copied
 COPY --chown=node:node spec ./spec
 RUN ls -la /app && ls -la /app/spec
 
@@ -25,5 +24,14 @@ RUN npm run build
 
 # Verify that the build artifact exists
 RUN ls -la dist/index.js
+
+# Stage 2: Production image (minimal, no shell, no package manager)
+FROM cgr.dev/chainguard/node:latest
+
+WORKDIR /app
+
+# Copy only production artifacts from builder
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./
 
 CMD ["echo", "SDK built successfully in secure Chainguard container"]
