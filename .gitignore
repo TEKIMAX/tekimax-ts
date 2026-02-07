@@ -17,3 +17,6 @@ tekimax-website
 *.tgz
 
 scripts/
+
+# Private internal packages (not for public repo)
+packages/convex-internal/
