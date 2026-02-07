@@ -165,9 +165,10 @@ Supply chain attacks on the Node.js/npm ecosystem are increasingly common. By bu
 |---------|-------------|--------|
 | **Batch API** | OpenAI's Batch API for 50% cost reduction on large jobs. Queue thousands of requests and retrieve results asynchronously. | 🔜 Planned |
 | **Edge Runtime** | Cloudflare Workers / Deno support. Current `Buffer` usage blocks edge compatibility — will be replaced with `Uint8Array` and Web Streams. | 🔜 Planned |
-| **Assistants / Threads** | Stateful conversation management with persistence. Create threads, append messages, and resume conversations across sessions — backed by [Convex](https://convex.dev). | 🔜 Planned |
+| **Assistants / Threads** | Stateful conversation management with persistence. Create threads, append messages, and resume conversations across sessions. | 🔜 Planned |
 | **Fine-tuning API** | Programmatic fine-tuning via OpenAI and Gemini APIs. Upload training data, launch jobs, and deploy custom models through a unified interface. | 🔜 Planned |
-| **Observability** | OpenTelemetry spans for every provider call — latency, tokens, cost, and error rate. First-class integration with [Convex](https://convex.dev) for real-time dashboards and analytics. | 🔜 Planned |
+| **Observability** | OpenTelemetry spans for every provider call — latency, tokens, cost, and error rate. | 🔜 Planned |
+| **Convex Integration** | Provision and manage [Convex](https://convex.dev) projects directly via the SDK. Spin up real-time backends for AI-powered apps. | 🔜 Planned |
 
 > **Want to help?** Pick a feature and open a PR, or join the discussion in [GitHub Issues](https://github.com/TEKIMAX/tekimax-ts/issues).
 
