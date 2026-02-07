@@ -3,7 +3,7 @@ title: React Integration
 description: Build AI chat interfaces with Tekimax and React.
 ---
 
-The Tekimax SDK includes a dedicated React hook, `useChat`, which simplifies state management for chat interfaces.
+The Tekimax SDK includes a dedicated React hook, `useChat`, which manages message state, streaming, tool execution, and abort handling for chat interfaces.
 
 ## Installation
 
@@ -13,14 +13,16 @@ npm install tekimax-ts react
 
 ## Setup
 
-First, initialize the provider outside of your component (or memoize it) to avoid recreation on every render.
+Initialize the provider outside your component (or memoize it) to avoid re-creating the SDK client on every render.
 
 ```typescript
 import { Tekimax, OpenAIProvider } from 'tekimax-ts';
 
 const provider = new OpenAIProvider({
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true // Be careful in production!
+  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY!,
+  // The OpenAI SDK blocks browser usage by default to prevent key exposure.
+  // Set this for prototyping; in production, proxy through your backend.
+  dangerouslyAllowBrowser: true
 });
 
 const client = new Tekimax({ provider });
@@ -30,21 +32,23 @@ const client = new Tekimax({ provider });
 
 ## Using `useChat`
 
-The `useChat` hook manages the message list, input state, and loading status.
+The `useChat` hook manages the message list, input state, loading status, and streaming automatically.
 
 ```tsx
 import { useChat } from 'tekimax-ts/react';
 
 export function ChatComponent() {
-  const { 
-    messages,        // Array of Message objects
-    input,           // Current input string
-    handleInputChange, // Change handler for <input>
-    handleSubmit,    // Submit handler for <form>
-    isLoading,       // Boolean
-    stop             // Function to abort streaming
+  const {
+    messages,          // Array of Message objects
+    setMessages,       // Override message history (e.g., for "clear chat")
+    input,             // Current input string
+    handleInputChange, // Change handler for <input> or <textarea>
+    handleSubmit,      // Submit handler for <form>
+    append,            // Programmatically add a message and trigger a response
+    isLoading,         // Boolean — true while streaming
+    stop               // Abort the current request
   } = useChat({
-    client: client, // Pass the Tekimax client instance
+    client: client,    // Pass the Tekimax client instance
     model: 'gpt-4o'
   });
 
@@ -69,8 +73,8 @@ export function ChatComponent() {
           placeholder="Say something..."
           disabled={isLoading}
         />
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           disabled={isLoading}
           className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
         >
@@ -87,8 +91,86 @@ export function ChatComponent() {
 }
 ```
 
+## Programmatic Messages with `append`
+
+Use `append` to add a message without a form — useful for "suggested prompts" or system-triggered messages.
+
+```typescript
+// Pass a string (auto-wrapped as a user message)
+await append('What is the weather today?');
+
+// Or pass a full Message object
+await append({ role: 'user', content: 'Hello!' });
+```
+
+## Automatic Tool Execution
+
+The `useChat` hook supports **automatic tool calling loops**. Define tools as a `Record<string, Tool>` — when the model returns tool calls, the hook executes them, appends the results, and re-sends to the model in a loop until the model responds with text.
+
+```tsx
+import { useChat } from 'tekimax-ts/react';
+
+const { messages, handleSubmit, input, handleInputChange, isLoading } = useChat({
+  client: client,
+  model: 'gpt-4o',
+  tools: {
+    get_weather: {
+      type: 'function',
+      function: {
+        name: 'get_weather',
+        description: 'Get current weather for a location',
+        parameters: {
+          type: 'object',
+          properties: { location: { type: 'string' } },
+          required: ['location']
+        }
+      },
+      // The execute function runs on the client. Return whatever
+      // you want the model to see as the tool result.
+      execute: async ({ location }) => {
+        const res = await fetch(`/api/weather?q=${location}`);
+        return res.json();
+      }
+    }
+  },
+  onFinish: (message) => console.log('Done:', message.content),
+  onError: (error) => console.error('Chat error:', error)
+});
+```
+
+## Reasoning (Thinking)
+
+Enable reasoning capture for compatible models:
+
+```typescript
+const { messages } = useChat({
+  client: client,
+  model: 'deepseek-r1',
+  think: true  // Enables reasoning capture during streaming
+});
+
+// Access thinking data from the message
+messages.forEach(m => {
+  if (m.thinking) console.log('Reasoning:', m.thinking);
+});
+```
+
+## `adapter` vs `client`
+
+The hook accepts either a `client` (Tekimax instance) or a raw `adapter` (AIProvider). Both work — `client` is preferred because it gives you access to all namespaces, while `adapter` is useful if you're integrating with a custom provider that doesn't use the Tekimax wrapper.
+
+```typescript
+// Option A: Tekimax client (recommended)
+useChat({ client: new Tekimax({ provider }), model: 'gpt-4o' });
+
+// Option B: Raw adapter (advanced)
+useChat({ adapter: provider, model: 'gpt-4o' });
+```
+
 ## Features
 
-- **Streaming**: Automatically accumulates streamed responses.
-- **Optimistic Updates**: Adds user message immediately.
-- **Race Condition Handling**: Ignores old requests if new ones are sent.
+- **Streaming**: Automatically accumulates streamed response deltas.
+- **Optimistic Updates**: Adds user message to the UI immediately, before the API responds.
+- **Race Condition Handling**: Ignores stale requests if a new one is sent.
+- **Tool Loops**: Automatically executes tools and re-sends results in a loop.
+- **Abort Support**: The `stop()` function cancels the in-flight request via `AbortController`.

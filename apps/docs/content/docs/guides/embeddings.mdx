@@ -1,0 +1,91 @@
+---
+title: Embeddings
+description: Generate vector embeddings for text with OpenAI and Gemini.
+---
+
+# Embeddings
+
+Generate vector embeddings for text using `client.text.embed()`. Useful for semantic search, RAG pipelines, and similarity comparisons.
+
+## Basic Usage
+
+```typescript
+import { Tekimax, OpenAIProvider } from 'tekimax-ts'
+
+const client = new Tekimax({
+  provider: new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY! })
+})
+
+const result = await client.text.embed({
+  input: 'The quick brown fox jumps over the lazy dog',
+  model: 'text-embedding-3-small',
+})
+
+console.log(result.embeddings[0]) // [0.012, -0.034, 0.056, ...] (1536 dimensions)
+console.log(result.model)         // 'text-embedding-3-small'
+console.log(result.usage)         // { promptTokens: 9, totalTokens: 9 }
+```
+
+## Batch Embeddings
+
+Pass an array to embed multiple texts in one call:
+
+```typescript
+const result = await client.text.embed({
+  input: [
+    'First document about cats',
+    'Second document about dogs',
+    'Third document about birds',
+  ],
+  model: 'text-embedding-3-small',
+})
+
+// result.embeddings.length === 3
+// Each embedding is a number[] vector
+```
+
+## Custom Dimensions
+
+Some models support reduced-dimension embeddings for faster similarity search:
+
+```typescript
+const result = await client.text.embed({
+  input: 'Hello world',
+  model: 'text-embedding-3-small',
+  dimensions: 256, // Reduce from 1536 to 256 dimensions
+})
+```
+
+## Provider Support
+
+| Provider | Default Model | Dimensions | Batch |
+|----------|---------------|-----------|-------|
+| **OpenAI** | `text-embedding-3-small` | Configurable | ✅ Native |
+| **Gemini** | `text-embedding-004` | 768 | ✅ Sequential |
+
+Providers that don't support embeddings will throw: `"Provider 'x' does not support embeddings"`.
+
+## Similarity Comparison
+
+Use cosine similarity to compare embeddings:
+
+```typescript
+function cosineSimilarity(a: number[], b: number[]): number {
+  let dot = 0, magA = 0, magB = 0
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i]! * b[i]!
+    magA += a[i]! * a[i]!
+    magB += b[i]! * b[i]!
+  }
+  return dot / (Math.sqrt(magA) * Math.sqrt(magB))
+}
+
+const result = await client.text.embed({
+  input: ['cats are great pets', 'dogs are loyal companions', 'the stock market crashed'],
+  model: 'text-embedding-3-small',
+})
+
+const sim01 = cosineSimilarity(result.embeddings[0]!, result.embeddings[1]!)
+const sim02 = cosineSimilarity(result.embeddings[0]!, result.embeddings[2]!)
+// sim01 > sim02 (cats/dogs are more similar than cats/stocks)
+```

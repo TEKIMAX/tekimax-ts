@@ -1,11 +1,11 @@
 ---
 title: xAI Grok Adapter
-description: Use Grok-1 and Grok-2 models via xAI API.
+description: Use Grok models via xAI's OpenAI-compatible API.
 ---
 
 # Grok Adapter
 
-The `tekimax-grok` package provides an interface for xAI's Grok models. Note that Grok uses an API signature compatible with OpenAI, so this adapter is optimized for xAI's specific quirks and base URLs.
+The Grok adapter connects to xAI's API for Grok models. xAI exposes an **OpenAI-compatible** endpoint, so this adapter reuses the official `openai` npm package with a custom `baseURL` — no extra dependency required.
 
 ## Installation
 
@@ -16,17 +16,58 @@ npm install tekimax-ts
 ## Usage
 
 ```typescript
-import { Tekimax } from 'tekimax-ts';
-import { GrokProvider } from 'tekimax-ts';
+import { Tekimax, GrokProvider } from 'tekimax-ts';
 
 const client = new Tekimax({
   provider: new GrokProvider({
-    apiKey: process.env.XAI_API_KEY,
+    apiKey: process.env.XAI_API_KEY!,
   })
 });
 
 const result = await client.text.chat.completions.create({
   model: 'grok-beta',
-  messages: [{ role: 'user', content: 'What is the meaning of life, the universe, and everything?' }]
+  messages: [{ role: 'user', content: 'What is the meaning of life?' }]
 });
+
+console.log(result.message.content);
 ```
+
+## Streaming
+
+```typescript
+const stream = client.text.chat.completions.createStream({
+  model: 'grok-beta',
+  messages: [{ role: 'user', content: 'Explain quantum mechanics simply' }]
+});
+
+for await (const chunk of stream) {
+  process.stdout.write(chunk.delta);
+}
+```
+
+## Tool Calling
+
+Tool calling works identically to OpenAI since xAI mirrors the same API contract.
+
+```typescript
+const result = await client.text.chat.completions.create({
+  model: 'grok-beta',
+  messages: [{ role: 'user', content: 'What time is it in London?' }],
+  tools: [{
+    type: 'function',
+    function: {
+      name: 'get_time',
+      description: 'Get current time for a timezone',
+      parameters: { type: 'object', properties: { timezone: { type: 'string' } } }
+    }
+  }]
+});
+
+console.log(result.message.toolCalls);
+```
+
+## Notes
+
+- **Why reuse the `openai` package?** xAI's API is fully OpenAI-compatible. Instead of writing and maintaining a separate HTTP client, we set `baseURL: 'https://api.x.ai/v1'` on the same `openai` SDK. This means Grok automatically inherits OpenAI SDK features like automatic retries and streaming.
+- **Text-only**: Grok does not currently support image generation, TTS, or vision. Calling `client.images.generate()` will throw a capability error.
+- **Model Names**: Use `grok-beta` or check xAI's documentation for the latest available model identifiers.

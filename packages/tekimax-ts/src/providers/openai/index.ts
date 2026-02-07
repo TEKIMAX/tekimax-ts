@@ -6,7 +6,13 @@ import type {
     Message,
     StreamChunk,
     ToolDefinition,
-    ToolCall
+    ToolCall,
+    TranscriptionOptions,
+    TranscriptionResult,
+    EmbeddingOptions,
+    EmbeddingResult,
+    ImageEditOptions,
+    ImageResult
 } from '../../core'
 
 export class OpenAIProvider implements AIProvider {
@@ -98,7 +104,8 @@ export class OpenAIProvider implements AIProvider {
             messages: this.mapMessages(options.messages),
             tools: options.tools?.map(this.mapTool),
             temperature: options.temperature,
-            max_tokens: options.maxTokens,
+            max_completion_tokens: options.maxTokens,
+            response_format: options.responseFormat ? { type: options.responseFormat.type } : undefined,
         })
 
         const choice = response.choices[0]
@@ -120,8 +127,10 @@ export class OpenAIProvider implements AIProvider {
             messages: this.mapMessages(options.messages),
             tools: options.tools?.map(this.mapTool),
             temperature: options.temperature,
-            max_tokens: options.maxTokens,
+            max_completion_tokens: options.maxTokens,
             stream: true,
+            stream_options: { include_usage: true },
+            response_format: options.responseFormat ? { type: options.responseFormat.type } : undefined,
         })
 
         for await (const chunk of stream) {
@@ -150,7 +159,11 @@ export class OpenAIProvider implements AIProvider {
             yield {
                 delta: delta.content || '',
                 toolCallDelta,
-                usage: undefined, // OpenAI stream doesn't always perform usage
+                usage: chunk.usage ? {
+                    promptTokens: chunk.usage.prompt_tokens,
+                    completionTokens: chunk.usage.completion_tokens,
+                    totalTokens: chunk.usage.total_tokens
+                } : undefined,
             }
         }
     }
@@ -240,5 +253,66 @@ export class OpenAIProvider implements AIProvider {
                 return undefined
             }).filter(Boolean) as ToolCall[] | undefined
         } as unknown as Message
+    }
+
+    async transcribeAudio(options: TranscriptionOptions): Promise<TranscriptionResult> {
+        const response = await this.client.audio.transcriptions.create({
+            file: options.file as any,
+            model: options.model || 'whisper-1',
+            language: options.language,
+            prompt: options.prompt,
+            response_format: options.response_format as any || 'verbose_json',
+            temperature: options.temperature
+        })
+
+        // verbose_json format returns segments
+        const result = response as any
+        return {
+            text: typeof result === 'string' ? result : result.text,
+            language: result.language,
+            duration: result.duration,
+            segments: result.segments?.map((s: any) => ({
+                start: s.start,
+                end: s.end,
+                text: s.text
+            }))
+        }
+    }
+
+    async embed(options: EmbeddingOptions): Promise<EmbeddingResult> {
+        const response = await this.client.embeddings.create({
+            input: options.input,
+            model: options.model || 'text-embedding-3-small',
+            dimensions: options.dimensions,
+        })
+
+        return {
+            embeddings: response.data.map(d => d.embedding),
+            model: response.model,
+            usage: response.usage ? {
+                promptTokens: response.usage.prompt_tokens,
+                totalTokens: response.usage.total_tokens,
+            } : undefined,
+        }
+    }
+
+    async editImage(options: ImageEditOptions): Promise<ImageResult> {
+        const response = await this.client.images.edit({
+            image: options.image as any,
+            prompt: options.prompt,
+            mask: options.mask as any,
+            model: options.model || 'dall-e-2',
+            n: options.n || 1,
+            size: (options.size as any) || '1024x1024',
+        })
+
+        return {
+            created: Date.now(),
+            data: (response.data || []).map(d => ({
+                url: d.url,
+                b64_json: d.b64_json,
+                revised_prompt: d.revised_prompt,
+            }))
+        }
     }
 }

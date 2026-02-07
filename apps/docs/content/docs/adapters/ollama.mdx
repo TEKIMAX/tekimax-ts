@@ -1,11 +1,11 @@
 ---
 title: Ollama Adapter
-description: Run local LLMs (Llama 3, Mistral) with Tekimax.
+description: Run local LLMs (Llama 3, Mistral, DeepSeek) with Tekimax.
 ---
 
 # Ollama Adapter
 
-The `tekimax-ollama` package connects to a local Ollama instance (default port `11434`).
+The Ollama adapter connects to a local or remote Ollama instance. It uses the `ollama` npm package's `/browser` sub-export — this strips Node-only `node:fs` code that would cause bundler errors in Vite, Next.js, or any browser-targeted build.
 
 ## Installation
 
@@ -16,31 +16,35 @@ npm install tekimax-ts
 ## Usage
 
 ```typescript
-import { Tekimax } from 'tekimax-ts';
-import { OllamaProvider } from 'tekimax-ts';
+import { Tekimax, OllamaProvider } from 'tekimax-ts';
 
 const client = new Tekimax({
   provider: new OllamaProvider({
-    host: 'http://127.0.0.1:11434', // Local Default
+    // Defaults to 127.0.0.1 (not "localhost") to avoid IPv6 DNS
+    // resolution issues on macOS and some Linux distros.
+    host: 'http://127.0.0.1:11434',
   })
 });
+
+const result = await client.text.chat.completions.create({
+  // Model must be pulled first: `ollama pull llama3`
+  model: 'llama3',
+  messages: [{ role: 'user', content: 'Why is the sky blue?' }]
+});
+
+console.log(result.message.content);
 ```
 
 ## Authentication & Cloud Support
 
-You can connect to a remote Ollama instance (e.g., behind a reverse proxy or Ollama Cloud) by providing an `apiKey`. This adds an `Authorization: Bearer <key>` header to requests.
+You can connect to a remote Ollama instance (e.g., behind a reverse proxy or Ollama Cloud) by providing an `apiKey`. The adapter injects an `Authorization: Bearer <key>` header via a custom `fetch` wrapper — the Ollama JS SDK doesn't natively support auth tokens.
 
 ```typescript
 const client = new Tekimax({
   provider: new OllamaProvider({
     host: 'https://your-ollama-instance.com',
-    apiKey: 'ollama_key_...' // Optional: Adds Bearer Token
+    apiKey: 'ollama_key_...'
   })
-});
-
-const result = await client.text.chat.completions.create({
-  model: 'llama3', // Must be pulled in Ollama first (`ollama pull llama3`)
-  messages: [{ role: 'user', content: 'Why is the sky blue?' }]
 });
 ```
 
@@ -49,9 +53,74 @@ const result = await client.text.chat.completions.create({
 Local models support streaming out of the box with the standard interface.
 
 ```typescript
-const stream = await client.text.chat.completions.create({
+const stream = client.text.chat.completions.createStream({
   model: 'mistral',
-  messages: [{ role: 'user', content: 'Count to 10 efficiently.' }],
-  stream: true
+  messages: [{ role: 'user', content: 'Count to 10 efficiently.' }]
 });
+
+for await (const chunk of stream) {
+  process.stdout.write(chunk.delta);
+}
 ```
+
+## Reasoning (Thinking)
+
+Ollama has **native** support for the `thinking` field on compatible models. Set `think: true` to capture the reasoning trace.
+
+```typescript
+const result = await client.text.chat.completions.create({
+  model: 'deepseek-r1',
+  messages: [{ role: 'user', content: 'Solve: if 2x + 3 = 11, what is x?' }],
+  think: true // Ollama passes this directly to the model
+});
+
+console.log(result.message.thinking); // "2x + 3 = 11, 2x = 8, x = 4"
+console.log(result.message.content);  // "x = 4"
+```
+
+## Vision (Multi-Modal)
+
+Ollama supports vision with models like `llava`. Pass images as base64 data URIs in the message content.
+
+```typescript
+const result = await client.text.chat.completions.create({
+  model: 'llava',
+  messages: [{
+    role: 'user',
+    content: [
+      { type: 'text', text: 'What is in this image?' },
+      { type: 'image_url', image_url: { url: 'data:image/png;base64,iVBOR...' } }
+    ]
+  }]
+});
+
+console.log(result.message.content);
+```
+
+## Tool Calling
+
+Tool calling is supported on compatible Ollama models (e.g., `llama3`, `mistral`).
+
+```typescript
+const result = await client.text.chat.completions.create({
+  model: 'llama3',
+  messages: [{ role: 'user', content: 'What is the weather in Berlin?' }],
+  tools: [{
+    type: 'function',
+    function: {
+      name: 'get_weather',
+      description: 'Get current weather',
+      parameters: { type: 'object', properties: { location: { type: 'string' } } }
+    }
+  }]
+});
+
+// Ollama doesn't provide unique tool call IDs, so the adapter generates them.
+console.log(result.message.toolCalls);
+```
+
+## Notes
+
+- **Why `ollama/browser`?** The default `ollama` import pulls in `node:fs` for file-based model management. This breaks client-side bundlers (Vite, webpack, Next.js). The `/browser` sub-export strips that code while keeping the chat API intact.
+- **Why `127.0.0.1`?** Using the IP literal instead of `localhost` avoids DNS resolution delays and failures on systems where `localhost` resolves to `::1` (IPv6) but Ollama only binds to `0.0.0.0` (IPv4).
+- **Model Availability**: Models must be pulled locally before use (`ollama pull <model>`). The SDK does not auto-pull models.

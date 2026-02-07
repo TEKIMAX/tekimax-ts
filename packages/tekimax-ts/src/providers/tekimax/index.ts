@@ -1,7 +1,7 @@
 import { TekimaxClient } from './client'
 import type { AIProvider } from '../../core/adapter'
 import type { ChatOptions, ChatResult, Message, StreamChunk, ToolCall } from '../../core/types'
-import type { ItemParam, UserMessageItemParam, AssistantMessageItemParam } from '../../gen/types'
+import type { UserMessageItemParam, AssistantMessageItemParam } from '../../gen/types'
 
 export class TekimaxProvider implements AIProvider {
     name = 'tekimax'
@@ -79,7 +79,6 @@ export class TekimaxProvider implements AIProvider {
     }
 
     async *chatStream(options: ChatOptions): AsyncIterable<StreamChunk> {
-        // TODO: Map tools for streaming as well
         const tools = options.tools?.map(t => ({
             type: 'function' as const,
             name: t.function.name,
@@ -87,7 +86,6 @@ export class TekimaxProvider implements AIProvider {
             parameters: t.function.parameters as any ?? undefined,
         }))
 
-        // Map full history for stateless execution
         const input = this.mapMessages(options.messages)
 
         const stream = this.client.sendMessageStream(input, {
@@ -98,10 +96,59 @@ export class TekimaxProvider implements AIProvider {
             signal: options.signal,
         })
 
+        let toolCallIndex = -1
+
         for await (const event of stream) {
+            // Text deltas
             if (event.type === 'response.output_text.delta' && event.delta) {
                 yield {
                     delta: event.delta,
+                }
+            }
+
+            // Tool call: new item added with type function_call
+            if (event.type === 'response.output_item.added' && (event as any).item?.type === 'function_call') {
+                toolCallIndex++
+                const item = (event as any).item
+                yield {
+                    delta: '',
+                    toolCallDelta: {
+                        index: toolCallIndex,
+                        id: item.call_id || item.id,
+                        type: 'function',
+                        function: {
+                            name: item.name || '',
+                            arguments: ''
+                        }
+                    }
+                }
+            }
+
+            // Tool call arguments delta
+            if (event.type === 'response.function_call_arguments.delta' && (event as any).delta) {
+                yield {
+                    delta: '',
+                    toolCallDelta: {
+                        index: toolCallIndex >= 0 ? toolCallIndex : 0,
+                        type: 'function',
+                        function: {
+                            name: '',
+                            arguments: (event as any).delta
+                        }
+                    }
+                }
+            }
+
+            // Response completed with usage
+            if (event.type === 'response.completed' && (event as any).response?.usage) {
+                const usage = (event as any).response.usage
+                yield {
+                    delta: '',
+                    usage: {
+                        promptTokens: usage.input_tokens || 0,
+                        completionTokens: usage.output_tokens || 0,
+                        totalTokens: (usage.input_tokens || 0) + (usage.output_tokens || 0)
+                    }
                 }
             }
         }
@@ -112,7 +159,13 @@ export class TekimaxProvider implements AIProvider {
         const items: Array<any> = []
 
         for (const msg of messages) {
-            if (msg.role === 'user') {
+            if (msg.role === 'system') {
+                items.push({
+                    type: 'message',
+                    role: 'system',
+                    content: msg.content || ''
+                })
+            } else if (msg.role === 'user') {
                 items.push({
                     type: 'message',
                     role: 'user',
@@ -126,7 +179,23 @@ export class TekimaxProvider implements AIProvider {
                         content: [{ type: 'output_text', text: msg.content }]
                     } as AssistantMessageItemParam)
                 }
-                // Handle tool calls in history if needed, but for now focusing on text
+                // Map tool calls from assistant messages
+                if (msg.toolCalls) {
+                    for (const tc of msg.toolCalls) {
+                        items.push({
+                            type: 'function_call',
+                            call_id: tc.id,
+                            name: tc.function.name,
+                            arguments: tc.function.arguments
+                        })
+                    }
+                }
+            } else if (msg.role === 'tool') {
+                items.push({
+                    type: 'function_call_output',
+                    call_id: msg.toolCallId,
+                    output: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content)
+                })
             }
         }
 
@@ -136,3 +205,4 @@ export class TekimaxProvider implements AIProvider {
 
 // Re-export the low-level client for backward compatibility
 export { TekimaxClient } from './client'
+

@@ -75,7 +75,7 @@ export class TekimaxClient {
    * const client = new TekimaxClient({ apiKey: "tm_..." });
    */
   constructor(options: { baseUrl?: string; apiKey?: string } = {}) {
-    this.baseUrl = options.baseUrl || 'https://api.tekimax.com'
+    this.baseUrl = options.baseUrl || 'https://api.example.com'
     this.headers = {
       'Content-Type': 'application/json',
       ...(options.apiKey ? { Authorization: `Bearer ${options.apiKey}` } : {}),

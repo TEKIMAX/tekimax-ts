@@ -162,6 +162,8 @@ export interface ChatOptions {
     stream?: boolean
     think?: boolean // Enable thinking parameter
     signal?: AbortSignal
+    /** Force a specific response format. 'json_object' enables JSON mode. */
+    responseFormat?: { type: 'json_object' | 'text' }
 }
 
 export interface ChatResult {
@@ -191,3 +193,42 @@ export interface StreamChunk {
         totalTokens: number
     }
 }
+
+export interface TranscriptionOptions {
+    file: File | Blob | Buffer
+    model?: string
+    language?: string
+    prompt?: string
+    response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt'
+    temperature?: number
+}
+
+export interface TranscriptionResult {
+    text: string
+    language?: string
+    duration?: number
+    segments?: Array<{ start: number; end: number; text: string }>
+}
+
+// --- Embeddings ---
+
+export interface EmbeddingOptions {
+    /** The text(s) to embed. Pass a string for a single embedding or an array for batch. */
+    input: string | string[]
+    /** The embedding model to use (e.g., 'text-embedding-3-small'). */
+    model?: string
+    /** Number of dimensions for the output embedding (supported by some models). */
+    dimensions?: number
+}
+
+export interface EmbeddingResult {
+    /** Array of embedding vectors — one per input string. */
+    embeddings: number[][]
+    /** Model used for the embeddings. */
+    model: string
+    usage?: {
+        promptTokens: number
+        totalTokens: number
+    }
+}
+

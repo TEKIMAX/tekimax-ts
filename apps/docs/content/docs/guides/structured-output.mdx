@@ -1,0 +1,95 @@
+---
+title: Structured Output (Zod)
+description: Generate typed, validated objects from LLMs with Zod schemas.
+---
+
+# Structured Output with Zod
+
+The `generateObject` utility wraps a chat call with automatic JSON-mode prompting and Zod validation. You get a fully-typed, validated object — or a clear error.
+
+## Basic Usage
+
+```typescript
+import { z } from 'zod'
+import { generateObject, OpenAIProvider } from 'tekimax-ts'
+
+const provider = new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY! })
+
+const result = await generateObject({
+  adapter: provider,
+  model: 'gpt-4o',
+  schema: z.object({
+    name: z.string(),
+    age: z.number(),
+    hobbies: z.array(z.string()),
+  }),
+  messages: [
+    { role: 'user', content: 'Extract: John is 30 years old and likes hiking and photography' }
+  ],
+})
+
+// result.object is fully typed as { name: string; age: number; hobbies: string[] }
+console.log(result.object.name)    // "John"
+console.log(result.object.age)     // 30
+console.log(result.object.hobbies) // ["hiking", "photography"]
+```
+
+## How It Works
+
+1. A system message is injected telling the model to respond with JSON matching your schema
+2. The model's response is parsed with `JSON.parse`
+3. The parsed object is validated with `schema.safeParse()`
+4. If validation fails, the Zod error is sent back to the model as a correction prompt
+5. The model gets another chance (controlled by `maxRetries`, default `1`)
+
+## Retry on Validation Failure
+
+If the model returns invalid JSON or the JSON doesn't match the schema, `generateObject` automatically retries with the error details appended.
+
+```typescript
+const result = await generateObject({
+  adapter: provider,
+  model: 'gpt-4o',
+  schema: z.object({
+    temperature: z.number().min(-273.15),
+    unit: z.enum(['celsius', 'fahrenheit']),
+    location: z.string(),
+  }),
+  messages: [
+    { role: 'user', content: 'Weather in Tokyo right now' }
+  ],
+  maxRetries: 2, // Up to 2 retries on validation failure
+})
+```
+
+## Complex Schemas
+
+`generateObject` supports nested objects, arrays, enums, optionals, and unions.
+
+```typescript
+const schema = z.object({
+  title: z.string(),
+  chapters: z.array(z.object({
+    heading: z.string(),
+    summary: z.string(),
+    pageCount: z.number().optional(),
+  })),
+  genre: z.enum(['fiction', 'non-fiction', 'academic']),
+  published: z.boolean(),
+})
+
+const result = await generateObject({
+  adapter: provider,
+  model: 'gpt-4o',
+  schema,
+  messages: [
+    { role: 'user', content: 'Describe the book "Sapiens" by Yuval Noah Harari' }
+  ],
+})
+```
+
+## Notes
+
+- **Code fences are handled**: If the model wraps JSON in \`\`\`json code fences, `generateObject` strips them automatically.
+- **System prompt injection**: A system message is always prepended. If you also pass a system message in `messages`, both will be present.
+- **Provider compatibility**: Works with any provider that supports chat — the JSON constraint is enforced via system prompt, not API-level JSON mode.

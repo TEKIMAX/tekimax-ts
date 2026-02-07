@@ -3,24 +3,24 @@ title: Error Handling
 description: Handling errors and exceptions in Tekimax.
 ---
 
-Tekimax takes a **pragmatic approach** to error handling.
+Tekimax takes a **pragmatic approach** to error handling: it adds its own checks only where they prevent confusing failures, and stays out of the way otherwise.
 
-1. **Configuration Errors**: Missing capabilities (e.g., calling `generateImage` on a text-only provider) throw standard `Error` objects.
-2. **Provider Errors**: Errors from upstream providers (OpenAI, Anthropic, etc.) are **bubbled up** transparently. This ensures you have full access to the original error details, status codes, and headers without information loss.
+1. **Capability Errors**: Calling a modality that your provider doesn't support (e.g., `images.generate` on a text-only provider) throws a standard `Error` immediately — before any network request is made. This prevents cryptic 404s from upstream APIs.
+2. **Provider Errors**: Errors from upstream providers (OpenAI, Anthropic, etc.) are **bubbled up transparently**. We intentionally do *not* wrap or re-throw them, because the original error objects carry status codes, headers, and retry metadata that you'd lose in a wrapper.
 
 ---
 
 ## Handling Capability Errors
 
-If you try to use a feature that your configured provider handles, Tekimax will throw a descriptive `Error`.
+If you try to use a feature that your configured provider does not support, Tekimax will throw a descriptive `Error`.
 
 ```typescript
 import { Tekimax, GrokProvider } from 'tekimax-ts';
 
-const client = new Tekimax({ provider: new GrokProvider(...) });
+const client = new Tekimax({ provider: new GrokProvider({ apiKey: process.env.XAI_API_KEY! }) });
 
 try {
-  // Grok is a text-only model
+  // Grok only supports text — no image generation.
   await client.images.generate({ prompt: "A cat" });
 } catch (error) {
   // Error: Provider 'grok' does not support image generation
@@ -32,35 +32,42 @@ try {
 
 ## Handling Provider Errors
 
-Since Tekimax wraps official SDKs, you can catch their specific error types if needed, or catch generic errors.
+Since Tekimax delegates to official SDKs (`openai`, `@anthropic-ai/sdk`, etc.), the error objects you catch are the same ones you'd get from those SDKs directly.
 
 ### Generic Handling (Recommended)
 
 ```typescript
 try {
-  await client.text.chat.completions.create({ ... });
+  const response = await client.text.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [{ role: 'user', content: 'Hello' }]
+  });
 } catch (error) {
   if (error instanceof Error) {
-    console.error(`Tekimax Error: ${error.message}`);
+    console.error(`Error: ${error.message}`);
   }
 }
 ```
 
 ### Provider-Specific Handling
 
-If you are using a specific provider and need deeper introspection (e.g., checking for rate limits), you can inspect the error object.
+If you need deeper introspection (e.g., checking for rate limits or extracting HTTP status codes), you can catch the provider SDK's error type directly.
 
 ```typescript
 import { OpenAIProvider } from 'tekimax-ts';
-import { APIError } from 'openai'; // Import from peer dependency
+// Import the error class from the provider's own package.
+// This is a peer dependency — you already have it installed.
+import { APIError } from 'openai';
 
 try {
-  await client.text.chat.completions.create({ ... });
+  await client.text.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [{ role: 'user', content: 'Hello' }]
+  });
 } catch (error) {
-  // If you know you are using OpenAI
   if (error instanceof APIError) {
-    console.log(error.status); // 400, 429, 500 etc.
-    console.log(error.name);   // BadRequestError, RateLimitError
+    console.log(error.status); // 400, 429, 500, etc.
+    console.log(error.name);   // BadRequestError, RateLimitError, etc.
   }
 }
 ```
@@ -70,7 +77,23 @@ try {
 ## Best Practices
 
 ### Validation
-Tekimax uses strict TypeScript types for inputs. Most invalid request errors (e.g., missing fields) will be caught at compile time.
+Tekimax uses strict TypeScript types for inputs. Most invalid request errors (e.g., missing fields) will be caught at **compile time** — before your code even runs. This is one of the key reasons we chose TypeScript over a plain JavaScript SDK.
 
 ### Automatic Retries
-Most official provider SDKs (OpenAI, Anthropic) include automatic retry logic for 429 (Rate Limit) and 5xx (Server Error) responses by default. Tekimax respects these defaults.
+Most official provider SDKs (OpenAI, Anthropic) include automatic retry logic for `429` (Rate Limit) and `5xx` (Server Error) responses by default. Because Tekimax delegates to these SDKs instead of making raw `fetch` calls, you get retry behavior for free — no extra configuration needed.
+
+### AbortSignal Support
+All chat methods accept an `AbortSignal` via the `signal` option. This lets you cancel in-flight requests (useful for the "Stop" button in chat UIs).
+
+```typescript
+const controller = new AbortController();
+
+// Cancel the request after 10 seconds
+setTimeout(() => controller.abort(), 10_000);
+
+const response = await client.text.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: 'Write a long essay.' }],
+  signal: controller.signal
+});
+```

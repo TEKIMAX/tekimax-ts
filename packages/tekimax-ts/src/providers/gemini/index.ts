@@ -5,7 +5,11 @@ import type {
     ChatResult,
     Message,
     StreamChunk,
-    ToolDefinition
+    ToolDefinition,
+    ImageAnalysisOptions,
+    ImageAnalysisResult,
+    EmbeddingOptions,
+    EmbeddingResult
 } from '../../core'
 
 export class GeminiProvider implements AIProvider {
@@ -92,6 +96,70 @@ export class GeminiProvider implements AIProvider {
         }
     }
 
+    async analyzeImage(options: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
+        let imagePart: Part;
+        const imageInput = options.image;
+
+        if (typeof imageInput === 'string') {
+            if (imageInput.startsWith('data:')) {
+                const match = imageInput.match(/^data:([^;]+);base64,(.+)$/)
+                if (match) {
+                    imagePart = {
+                        inlineData: {
+                            data: match[2] || '',
+                            mimeType: match[1] || 'image/png'
+                        }
+                    }
+                } else {
+                    throw new Error('Invalid base64 data URL')
+                }
+            } else if (imageInput.startsWith('http')) {
+                const resp = await fetch(imageInput);
+                const arrayBuffer = await resp.arrayBuffer();
+                const base64 = Buffer.from(arrayBuffer).toString('base64');
+                const contentType = resp.headers.get('content-type') || 'image/png';
+                imagePart = {
+                    inlineData: {
+                        data: base64,
+                        mimeType: contentType
+                    }
+                }
+            } else {
+                // Assume raw base64
+                imagePart = {
+                    inlineData: {
+                        data: imageInput,
+                        mimeType: 'image/png'
+                    }
+                }
+            }
+        } else if (typeof Buffer !== 'undefined' && imageInput instanceof Buffer) {
+            imagePart = {
+                inlineData: {
+                    data: imageInput.toString('base64'),
+                    mimeType: 'image/png'
+                }
+            }
+        } else {
+            throw new Error('Unsupported image format')
+        }
+
+        const model = this.client.getGenerativeModel({ model: options.model });
+        const result = await model.generateContent([
+            options.prompt || 'Describe this image',
+            imagePart
+        ]);
+
+        return {
+            content: result.response.text(),
+            usage: {
+                inputTokens: result.response.usageMetadata?.promptTokenCount,
+                outputTokens: result.response.usageMetadata?.candidatesTokenCount,
+                totalTokens: result.response.usageMetadata?.totalTokenCount
+            }
+        }
+    }
+
     async chat(options: ChatOptions): Promise<ChatResult> {
         const model = this.client.getGenerativeModel({
             model: options.model || 'gemini-pro',
@@ -103,6 +171,7 @@ export class GeminiProvider implements AIProvider {
             generationConfig: {
                 maxOutputTokens: options.maxTokens,
                 temperature: options.temperature,
+                responseMimeType: options.responseFormat?.type === 'json_object' ? 'application/json' : undefined,
             }
         });
 
@@ -150,6 +219,7 @@ export class GeminiProvider implements AIProvider {
             generationConfig: {
                 maxOutputTokens: options.maxTokens,
                 temperature: options.temperature,
+                responseMimeType: options.responseFormat?.type === 'json_object' ? 'application/json' : undefined,
             }
         });
 
@@ -238,6 +308,26 @@ export class GeminiProvider implements AIProvider {
             name: tool.function.name,
             description: tool.function.description,
             parameters: tool.function.parameters
+        }
+    }
+
+    async embed(options: EmbeddingOptions): Promise<EmbeddingResult> {
+        const model = this.client.getGenerativeModel({
+            model: options.model || 'text-embedding-004'
+        })
+
+        const inputs = Array.isArray(options.input) ? options.input : [options.input]
+        const embeddings: number[][] = []
+
+        // Gemini embeds one text at a time via embedContent
+        for (const text of inputs) {
+            const result = await model.embedContent(text)
+            embeddings.push(result.embedding.values)
+        }
+
+        return {
+            embeddings,
+            model: options.model || 'text-embedding-004',
         }
     }
 }

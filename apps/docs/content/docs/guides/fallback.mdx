@@ -1,0 +1,104 @@
+---
+title: Fallback Provider
+description: Automatic failover across multiple AI providers.
+---
+
+# Fallback Provider
+
+The `FallbackProvider` tries providers in order. If the first one fails, it automatically falls back to the next.
+
+## Basic Usage
+
+```typescript
+import { Tekimax, FallbackProvider, OpenAIProvider, AnthropicProvider, GeminiProvider } from 'tekimax-ts'
+
+const provider = new FallbackProvider([
+  new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY! }),
+  new AnthropicProvider({ apiKey: process.env.ANTHROPIC_API_KEY! }),
+  new GeminiProvider({ apiKey: process.env.GEMINI_API_KEY! }),
+])
+
+const client = new Tekimax({ provider })
+
+// If OpenAI is down → tries Anthropic → tries Gemini
+const result = await client.text.generate({
+  model: 'gpt-4o', // Model is per-provider, so all providers should support the model
+  messages: [{ role: 'user', content: 'Hello!' }],
+})
+```
+
+## Monitoring Fallbacks
+
+Use the `onFallback` callback to log when a provider fails:
+
+```typescript
+const provider = new FallbackProvider(
+  [openai, anthropic, gemini],
+  {
+    onFallback: (error, failedProvider, nextProvider) => {
+      console.warn(`⚠️ ${failedProvider} failed: ${error.message}, trying ${nextProvider}`)
+    }
+  }
+)
+```
+
+## Selective Fallback
+
+By default, any error triggers a fallback. Use `shouldFallback` to control which errors cause fallover:
+
+```typescript
+const provider = new FallbackProvider(
+  [openai, anthropic],
+  {
+    shouldFallback: (error, providerName) => {
+      const status = (error as any).status
+      // Only fallback on server errors and rate limits
+      // Don't fallback on 400 (bad request) — that's a user error
+      return status === 429 || (status >= 500 && status < 600)
+    }
+  }
+)
+```
+
+## Multi-modal Capabilities
+
+For multi-modal methods (images, audio, video, embeddings), `FallbackProvider` delegates to the **first provider** that supports the capability:
+
+```typescript
+const provider = new FallbackProvider([
+  new AnthropicProvider({ apiKey: '...' }),  // No image generation
+  new OpenAIProvider({ apiKey: '...' }),      // ✅ Has image generation
+])
+
+// Anthropic doesn't support generateImage, so OpenAI handles it automatically
+const image = await client.images.generate({ prompt: 'A sunset' })
+```
+
+## Streaming
+
+Streaming works with fallback — the connection phase is retried across providers, but once streaming begins, mid-stream errors are not retried:
+
+```typescript
+for await (const chunk of client.text.generateStream({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: 'Tell me a story' }],
+})) {
+  process.stdout.write(chunk.delta)
+}
+```
+
+## Combining with Retry and Middleware
+
+Stack `FallbackProvider` with retry and middleware for production resilience:
+
+```typescript
+import { FallbackProvider, createRetryProvider, wrapProvider, loggingMiddleware } from 'tekimax-ts'
+
+// Each provider retries 3 times before the fallback kicks in
+const resilientOpenAI = createRetryProvider(new OpenAIProvider({ apiKey: '...' }), { maxRetries: 3 })
+const resilientAnthropic = createRetryProvider(new AnthropicProvider({ apiKey: '...' }), { maxRetries: 3 })
+
+const provider = new FallbackProvider([resilientOpenAI, resilientAnthropic])
+const observed = wrapProvider(provider, [loggingMiddleware()])
+const client = new Tekimax({ provider: observed })
+```

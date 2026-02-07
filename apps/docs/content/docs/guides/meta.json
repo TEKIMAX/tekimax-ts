@@ -2,6 +2,12 @@
     "pages": [
         "multi-modal-workflows",
         "react",
-        "thinking"
+        "thinking",
+        "structured-output",
+        "cost-tracking",
+        "retry",
+        "middleware",
+        "embeddings",
+        "fallback"
     ]
 }

@@ -1,0 +1,3 @@
+{
+    "extends": "./packages/tekimax-ts/tsconfig.json"
+}

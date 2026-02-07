@@ -31,10 +31,10 @@
 
 The **Tekimax SDK** solves the fragmentation of AI APIs. Instead of rewriting your integration code for every provider (handling different request formats, streaming implementations, and error types), you use **one standard interface**.
 
-- **Write Once, Run Anywhere**: Switch between OpenAI (Cloud) and Ollama (Local) with a singe line of config.
+- **Write Once, Run Anywhere**: Switch between OpenAI (Cloud) and Ollama (Local) with a single line of config.
 - **Type-Safe**: Full TypeScript support with Zod validation for inputs and outputs.
-- **Edge Compatible**: Zero-dependency core designed for Vercel Edge, Cloudflare Workers, and simplistic Node.js environments.
-- **React Ready**: Includes `useChat` and `useCompletion` hooks for instant UI integration.
+- **Multi-Modal**: Text, images, audio, video, and embeddings through a unified namespace API.
+- **React Ready**: Includes a `useChat` hook for instant UI integration.
 
 
 
@@ -45,7 +45,7 @@ The **Tekimax SDK** solves the fragmentation of AI APIs. Instead of rewriting yo
 npm install tekimax-ts
 ```
 
-## � Usage
+## 💻 Usage
 
 ### 1. Initialize the Client
 
@@ -148,6 +148,18 @@ npx turbo test
 # Start Docs Site
 npx turbo dev --filter=docs
 ```
+
+## 🗺️ Roadmap
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| **Batch API** | OpenAI's Batch API for 50% cost reduction on large jobs. Queue thousands of requests and retrieve results asynchronously. | 🔜 Planned |
+| **Edge Runtime** | Cloudflare Workers / Deno support. Current `Buffer` usage blocks edge compatibility — will be replaced with `Uint8Array` and Web Streams. | 🔜 Planned |
+| **Assistants / Threads** | Stateful conversation management with persistence. Create threads, append messages, and resume conversations across sessions — backed by [Convex](https://convex.dev). | 🔜 Planned |
+| **Fine-tuning API** | Programmatic fine-tuning via OpenAI and Gemini APIs. Upload training data, launch jobs, and deploy custom models through a unified interface. | 🔜 Planned |
+| **Observability** | OpenTelemetry spans for every provider call — latency, tokens, cost, and error rate. First-class integration with [Convex](https://convex.dev) for real-time dashboards and analytics. | 🔜 Planned |
+
+> **Want to help?** Pick a feature and open a PR, or join the discussion in [GitHub Issues](https://github.com/TEKIMAX/tekimax-ts/issues).
 
 ## 💖 Support
 

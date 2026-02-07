@@ -13,6 +13,7 @@
 
 ```bash
 npm install tekimax-ts
+```
 
 ## 🌟 Features
 
@@ -20,8 +21,6 @@ npm install tekimax-ts
 - **Type Safety**: End-to-end TypeScript support. Zod schemas for runtime validation.
 - **Zero Latency**: Lightweight adapter pattern with zero runtime overhead.
 - **Zero CVEs**: Hardened supply chain using Chainguard images.
-
-## 💻 Usage
 
 ## 💻 Usage
 
@@ -159,6 +158,18 @@ At **Tekimax**, we believe security is a feature, not an afterthought.
 - **Secured by Chainguard**: Our build pipeline and artifacts rely on [Chainguard Images](https://www.chainguard.dev/chainguard-images)—hardened, minimal container images designed to secure the software supply chain. Chainguard images are stripped of shells, package managers, and other unnecessary tools that attackers often exploit.
 
 Supply chain attacks on the Node.js/npm ecosystem are increasingly common. By building on Chainguard, we ensure that the Tekimax SDK meets the highest standards of integrity and safety for enterprise and production use.
+
+## 🗺️ Roadmap
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| **Batch API** | OpenAI's Batch API for 50% cost reduction on large jobs. Queue thousands of requests and retrieve results asynchronously. | 🔜 Planned |
+| **Edge Runtime** | Cloudflare Workers / Deno support. Current `Buffer` usage blocks edge compatibility — will be replaced with `Uint8Array` and Web Streams. | 🔜 Planned |
+| **Assistants / Threads** | Stateful conversation management with persistence. Create threads, append messages, and resume conversations across sessions — backed by [Convex](https://convex.dev). | 🔜 Planned |
+| **Fine-tuning API** | Programmatic fine-tuning via OpenAI and Gemini APIs. Upload training data, launch jobs, and deploy custom models through a unified interface. | 🔜 Planned |
+| **Observability** | OpenTelemetry spans for every provider call — latency, tokens, cost, and error rate. First-class integration with [Convex](https://convex.dev) for real-time dashboards and analytics. | 🔜 Planned |
+
+> **Want to help?** Pick a feature and open a PR, or join the discussion in [GitHub Issues](https://github.com/TEKIMAX/tekimax-ts/issues).
 
 ## Get Involved
 

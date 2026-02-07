@@ -1,0 +1,98 @@
+---
+title: Retry & Resilience
+description: Automatic retry with exponential backoff for API calls.
+---
+
+# Retry & Resilience
+
+The SDK provides two retry utilities: `withRetry` for wrapping individual calls, and `createRetryProvider` for applying retry logic to an entire provider.
+
+## `withRetry` — Single Call
+
+Wrap any async function with retry and exponential backoff:
+
+```typescript
+import { withRetry } from 'tekimax-ts'
+
+const result = await withRetry(
+  () => client.text.generate({
+    model: 'gpt-4o',
+    messages: [{ role: 'user', content: 'Hello!' }]
+  }),
+  {
+    maxRetries: 3,
+    initialDelayMs: 1000,
+    backoffMultiplier: 2,
+    maxDelayMs: 30000,
+  }
+)
+```
+
+The delay sequence would be: `1000ms → 2000ms → 4000ms` (with ±25% jitter by default).
+
+## `createRetryProvider` — Provider-Level
+
+Apply retry to every call through a provider. All `chat`, `chatStream`, and multi-modal methods get retry automatically.
+
+```typescript
+import { Tekimax, OpenAIProvider, createRetryProvider } from 'tekimax-ts'
+
+const provider = createRetryProvider(
+  new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY! }),
+  { maxRetries: 3, initialDelayMs: 500 }
+)
+
+const client = new Tekimax({ provider })
+// All calls through this client now auto-retry on transient failures
+```
+
+## Default Retry Behavior
+
+By default, retries trigger on:
+
+- **Rate limits** (HTTP 429)
+- **Server errors** (HTTP 500–599)
+- **Network errors** (`ECONNREFUSED`, `ECONNRESET`, `ETIMEDOUT`, `fetch failed`)
+
+## Custom Retry Logic
+
+Provide a `shouldRetry` predicate for custom retry decisions:
+
+```typescript
+const result = await withRetry(
+  () => client.text.generate({ model: 'gpt-4o', messages }),
+  {
+    maxRetries: 5,
+    shouldRetry: (error, attempt) => {
+      // Only retry rate limits, not other errors
+      return (error as any).status === 429
+    }
+  }
+)
+```
+
+## Cancellation with AbortSignal
+
+Retries respect `AbortSignal` — cancellation stops the retry loop immediately:
+
+```typescript
+const controller = new AbortController()
+
+// Cancel after 10 seconds, even if retries are in progress
+setTimeout(() => controller.abort(), 10000)
+
+const result = await withRetry(
+  () => client.text.generate({
+    model: 'gpt-4o',
+    messages,
+    signal: controller.signal
+  }),
+  { maxRetries: 5, signal: controller.signal }
+)
+```
+
+## Notes
+
+- **Jitter is enabled by default** — this prevents the "thundering herd" problem where multiple clients retry at exactly the same time after an outage.
+- **Stream retry covers connection only** — `createRetryProvider` retries the initial stream connection. Once streaming begins, mid-stream errors are not retried (you'd lose the partial response).
+- **Composable with middleware** — you can combine `createRetryProvider` with `wrapProvider` (middleware) for retry + logging + cost tracking in one stack.

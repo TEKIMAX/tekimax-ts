@@ -1,11 +1,11 @@
 ---
 title: OpenAI Adapter
-description: Use OpenAI models (GPT-4o, GPT-3.5) with Tekimax.
+description: Use OpenAI models (GPT-4o, o1) with Tekimax.
 ---
 
 # OpenAI Adapter
 
-The `tekimax-openai` package enables support for OpenAI's official API.
+The OpenAI adapter wraps the official `openai` npm package. It's the most feature-complete adapter, supporting all four modalities: text, images, audio, and video analysis.
 
 ## Installation
 
@@ -16,13 +16,13 @@ npm install tekimax-ts
 ## Usage
 
 ```typescript
-import { Tekimax } from 'tekimax-ts';
-import { OpenAIProvider } from 'tekimax-ts';
+import { Tekimax, OpenAIProvider } from 'tekimax-ts';
 
 const client = new Tekimax({
   provider: new OpenAIProvider({
-    apiKey: process.env.OPENAI_API_KEY,
-    // organization: 'org-...' // Optional
+    apiKey: process.env.OPENAI_API_KEY!,
+    // Enable browser-side usage (see note below).
+    // dangerouslyAllowBrowser: true
   })
 });
 
@@ -30,5 +30,75 @@ const result = await client.text.chat.completions.create({
   model: 'gpt-4o',
   messages: [{ role: 'user', content: 'Hello OpenAI' }]
 });
+
+console.log(result.message.content);
 ```
 
+## Streaming
+
+```typescript
+const stream = client.text.chat.completions.createStream({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: 'Tell me a story' }]
+});
+
+for await (const chunk of stream) {
+  process.stdout.write(chunk.delta);
+}
+```
+
+## Image Generation
+
+```typescript
+const result = await client.images.generate({
+  prompt: 'A futuristic cityscape at sunset',
+  model: 'dall-e-3',
+  size: '1024x1024',
+  quality: 'hd'
+});
+
+console.log(result.data[0].url);
+```
+
+## Image Analysis (Vision)
+
+```typescript
+const analysis = await client.images.analyze({
+  model: 'gpt-4o',
+  image: 'https://example.com/chart.png',
+  prompt: 'Extract the key data points from this chart.'
+});
+
+console.log(analysis.content);
+```
+
+## Text-to-Speech
+
+```typescript
+const audio = await client.audio.speak({
+  model: 'tts-1',
+  input: 'Hello, this is a test.',
+  voice: 'alloy'
+});
+
+console.log(`Generated ${audio.buffer.byteLength} bytes of audio`);
+```
+
+## Audio Transcription
+
+```typescript
+const transcription = await client.audio.transcribe({
+  file: audioBlob, // File, Blob, or Buffer
+  model: 'whisper-1',
+  response_format: 'verbose_json'
+});
+
+console.log(transcription.text);
+console.log(transcription.segments); // Word-level timestamps
+```
+
+## Notes
+
+- **`dangerouslyAllowBrowser`**: The OpenAI SDK blocks client-side usage by default to prevent API key exposure in browser bundles. Set this to `true` only for prototyping — in production, proxy requests through your backend.
+- **`max_completion_tokens`**: The adapter maps Tekimax's `maxTokens` to OpenAI's `max_completion_tokens` field (not the deprecated `max_tokens`). This is required by OpenAI's v6 SDK.
+- **Stream Options**: The adapter automatically sets `stream_options: { include_usage: true }` on streaming requests so that token usage data is included in the final chunk.

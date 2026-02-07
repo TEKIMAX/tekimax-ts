@@ -1,11 +1,11 @@
 ---
 title: Google Gemini Adapter
-description: Use Google's Gemini Pro models with Tekimax.
+description: Use Gemini 1.5 Pro and Flash models with Tekimax.
 ---
 
 # Gemini Adapter
 
-The `tekimax-gemini` package integrates with Google's Generative AI SDK (`@google/genai`).
+The Gemini adapter integrates with Google's `@google/generative-ai` SDK. It translates Tekimax's chat format into Gemini's session-based `startChat()` / `sendMessage()` model.
 
 ## Installation
 
@@ -16,12 +16,11 @@ npm install tekimax-ts
 ## Usage
 
 ```typescript
-import { Tekimax } from 'tekimax-ts';
-import { GeminiProvider } from 'tekimax-ts';
+import { Tekimax, GeminiProvider } from 'tekimax-ts';
 
 const client = new Tekimax({
   provider: new GeminiProvider({
-    apiKey: process.env.GOOGLE_API_KEY,
+    apiKey: process.env.GOOGLE_API_KEY!,
   })
 });
 
@@ -29,5 +28,74 @@ const result = await client.text.chat.completions.create({
   model: 'gemini-1.5-pro',
   messages: [{ role: 'user', content: 'Hello Gemini' }]
 });
+
+console.log(result.message.content);
 ```
 
+## Streaming
+
+```typescript
+const stream = client.text.chat.completions.createStream({
+  model: 'gemini-1.5-flash',
+  messages: [{ role: 'user', content: 'List 5 fun facts about space' }]
+});
+
+for await (const chunk of stream) {
+  process.stdout.write(chunk.delta);
+}
+```
+
+## Tool Calling
+
+The adapter maps the standard `tools` array to Gemini's `functionDeclarations` format. Gemini returns `functionCall` objects in its response, which the adapter normalizes to the unified `toolCalls` array.
+
+```typescript
+const result = await client.text.chat.completions.create({
+  model: 'gemini-1.5-pro',
+  messages: [{ role: 'user', content: 'What is the weather in Tokyo?' }],
+  tools: [{
+    type: 'function',
+    function: {
+      name: 'get_weather',
+      description: 'Get current weather',
+      parameters: { type: 'object', properties: { location: { type: 'string' } } }
+    }
+  }]
+});
+
+console.log(result.message.toolCalls);
+```
+
+## Image Analysis (Vision)
+
+Gemini supports image analysis via `inlineData`. The adapter auto-fetches remote URLs and converts them to base64 — Gemini's API does not accept remote image URLs directly.
+
+```typescript
+const analysis = await client.images.analyze({
+  model: 'gemini-1.5-flash',
+  image: 'https://example.com/chart.png',
+  prompt: 'Extract the data from this chart.'
+});
+
+console.log(analysis.content);
+```
+
+## Video Analysis
+
+Gemini is the only provider with native video understanding. The adapter downloads remote video URLs and converts them to `inlineData` automatically.
+
+```typescript
+const analysis = await client.videos.analyze({
+  model: 'gemini-1.5-flash', // Flash has a 1M token context window at lower cost
+  video: 'https://cdn.example.com/demo.mp4',
+  prompt: 'Summarize what happens in this video.'
+});
+
+console.log(analysis.content);
+```
+
+## Notes
+
+- **Session Model**: Gemini uses `startChat()` + `sendMessage()` internally. The adapter creates a session from your message history (all messages except the last) and sends the last message as the input. This preserves multi-turn context.
+- **Model Names**: Use the full model identifier: `gemini-1.5-pro`, `gemini-1.5-flash`, `gemini-pro`. Note that `gemini-pro` maps to the older Gemini 1.0 Pro.
+- **Image URLs**: Gemini doesn't accept remote URLs directly in the `inlineData` format. The adapter fetches the image, converts it to base64, and detects the MIME type automatically. For best performance, pass base64 data URIs directly if you already have the image data.

@@ -1,11 +1,11 @@
 ---
 title: Anthropic Adapter
-description: Use Claude 3.5 and Claude 3 models with Tekimax.
+description: Use Claude 3.5 Sonnet and Claude 3 models with Tekimax.
 ---
 
 # Anthropic Adapter
 
-The `tekimax-anthropic` package adapts Anthropic's Messages API to the standard Tekimax interface.
+The Anthropic adapter translates Tekimax's unified interface to Anthropic's [Messages API](https://docs.anthropic.com/en/api/messages). Under the hood it uses the official `@anthropic-ai/sdk` package.
 
 ## Installation
 
@@ -16,12 +16,11 @@ npm install tekimax-ts
 ## Usage
 
 ```typescript
-import { Tekimax } from 'tekimax-ts';
-import { AnthropicProvider } from 'tekimax-ts';
+import { Tekimax, AnthropicProvider } from 'tekimax-ts';
 
 const client = new Tekimax({
   provider: new AnthropicProvider({
-    apiKey: process.env.ANTHROPIC_API_KEY,
+    apiKey: process.env.ANTHROPIC_API_KEY!,
   })
 });
 
@@ -29,9 +28,63 @@ const result = await client.text.chat.completions.create({
   model: 'claude-3-5-sonnet-20240620',
   messages: [{ role: 'user', content: 'Hello Claude' }]
 });
+
+console.log(result.message.content);
+```
+
+## Streaming
+
+```typescript
+const stream = client.text.chat.completions.createStream({
+  model: 'claude-3-5-sonnet-20240620',
+  messages: [{ role: 'user', content: 'Tell me a story' }]
+});
+
+for await (const chunk of stream) {
+  process.stdout.write(chunk.delta);
+}
+```
+
+## Tool Calling
+
+Tool calling works identically to OpenAI — the adapter handles the translation to Anthropic's `tool_use` content blocks behind the scenes.
+
+```typescript
+const result = await client.text.chat.completions.create({
+  model: 'claude-3-5-sonnet-20240620',
+  messages: [{ role: 'user', content: 'What is the weather in Paris?' }],
+  tools: [{
+    type: 'function',
+    function: {
+      name: 'get_weather',
+      description: 'Get current weather for a location',
+      parameters: {
+        type: 'object',
+        properties: { location: { type: 'string' } },
+        required: ['location']
+      }
+    }
+  }]
+});
+
+// Normalized to the same shape as every other provider.
+console.log(result.message.toolCalls);
+```
+
+## Vision (Image Analysis)
+
+```typescript
+const analysis = await client.images.analyze({
+  model: 'claude-3-5-sonnet-20240620',
+  image: 'https://example.com/photo.jpg', // URL or Base64 data URI
+  prompt: 'Describe what you see in this image.'
+});
+
+console.log(analysis.content);
 ```
 
 ## Notes
 
-- **System Prompts**: Tekimax automatically extracts `system` messages from the message list and passes them to Anthropic's top-level `system` parameter.
-- **Max Tokens**: Defaults are handled by the adapter, but you can override them in the request.
+- **System Prompts**: Anthropic's Messages API requires `system` as a top-level parameter, not a message role. The adapter automatically extracts any `{ role: 'system' }` messages from your array and passes them to the `system` field — so you can use the same message format as every other provider.
+- **Max Tokens**: Anthropic requires a `max_tokens` value on every request. The adapter defaults to `1024` if you don't set `maxTokens`, so you don't need to remember this requirement.
+- **Tool Result Mapping**: Anthropic expects tool results as a `user` message with `tool_result` content blocks, not as a `role: 'tool'` message. The adapter handles this conversion automatically.

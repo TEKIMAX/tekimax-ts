@@ -20,17 +20,17 @@ import { Card, Cards } from 'fumadocs-ui/components/card';
 ## Why Tekimax?
 
 -   **Security First**: Built on **Chainguard** images with a verified build pipeline. Zero CVEs.
--   **Unified Interface**: Switch between OpenAI, Anthropic, Gemini, and Ollama with a single line of code.
+-   **Unified Interface**: Switch between OpenAI, Anthropic, Gemini, Grok, OpenRouter, and Ollama with a single line of code.
 -   **Type-Safe**: Full IDE support with Zod schemas for every request and response.
--   **No Vendor Lock-in**: Decouple your application logic from specific AI provider SDKs.
+-   **No Vendor Lock-in**: Decouple your application logic from specific AI provider SDKs. If a provider raises prices or goes down, swap the adapter — your application code stays the same.
 
 ## Supported Providers
 
 <Cards>
+  <Card icon={<Cpu />} href="/docs/adapters/openai" title="OpenAI" />
   <Card icon={<Cpu />} href="/docs/adapters/anthropic" title="Anthropic" />
   <Card icon={<Cpu />} href="/docs/adapters/gemini" title="Google Gemini" />
   <Card icon={<Cpu />} href="/docs/adapters/ollama" title="Ollama" />
-  <Card icon={<Cpu />} href="/docs/adapters/openai" title="OpenAI" />
   <Card icon={<Globe />} href="/docs/adapters/grok" title="xAI (Grok)" />
   <Card icon={<Globe />} href="/docs/adapters/openrouter" title="OpenRouter" />
 </Cards>
@@ -50,10 +50,14 @@ import { Tekimax, OpenAIProvider } from 'tekimax-ts';
 
 // 1. Configure the Provider
 const provider = new OpenAIProvider({
-  apiKey: process.env.OPENAI_API_KEY,
+  // Always pass keys via environment variables — never hardcode secrets,
+  // so credentials stay out of source control and can rotate without redeploying.
+  apiKey: process.env.OPENAI_API_KEY!,
 });
 
 // 2. Initialize the Client
+// The Tekimax wrapper decouples your app from any single provider.
+// Swap OpenAIProvider → AnthropicProvider and nothing else changes.
 const client = new Tekimax({ provider });
 
 // 3. Chat (Text Modality)
@@ -62,5 +66,6 @@ const response = await client.text.chat.completions.create({
   messages: [{ role: 'user', content: 'Hello World!' }],
 });
 
-console.log(response.choices[0].message.content);
+// The SDK returns a flat ChatResult — no choices array to index into.
+console.log(response.message.content);
 ```

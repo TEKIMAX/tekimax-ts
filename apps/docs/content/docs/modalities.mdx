@@ -6,13 +6,13 @@ description: Unified interface for Text, Images, Audio, and Video.
 import { Image, Mic, Video, Type } from 'lucide-react';
 import { Card, Cards } from 'fumadocs-ui/components/card';
 
-Tekimax organizes AI capabilities into four distinct **modalities**, matching the architecture of the [Celeste SDK](https://github.com/tekimax/celeste-sdk). Ensure your provider supports the modality you are calling.
+Tekimax organizes AI capabilities into four distinct **modalities**. Each modality maps to a namespace on the client, so IDE auto-complete always shows the right methods. Ensure your provider supports the modality you are calling — unsupported calls throw a descriptive error.
 
 <Cards>
   <Card icon={<Type />} href="#text-chat" title="Text" description="Chat, Completions, and Embeddings" />
-  <Card icon={<Image />} href="#images" title="Images" description="Generation and Editing" />
-  <Card icon={<Mic />} href="#audio" title="Audio" description="Text-to-Speech (TTS)" />
-  <Card icon={<Video />} href="#video" title="Video" description="Video Generation" />
+  <Card icon={<Image />} href="#images" title="Images" description="Generation, Editing, and Vision" />
+  <Card icon={<Mic />} href="#audio" title="Audio" description="Text-to-Speech (TTS) and Transcription (STT)" />
+  <Card icon={<Video />} href="#video" title="Video" description="Generation and Analysis" />
 </Cards>
 
 ---
@@ -24,14 +24,15 @@ The `client.text` namespace handles all Language Model interactions.
 ```typescript
 import { Tekimax, OpenAIProvider } from 'tekimax-ts';
 
-const client = new Tekimax({ provider: new OpenAIProvider({ apiKey: '...' }) });
+const client = new Tekimax({ provider: new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY! }) });
 
 const response = await client.text.chat.completions.create({
   model: 'gpt-4o',
   messages: [{ role: 'user', content: 'Explain quantum computing' }],
 });
 
-console.log(response.content);
+// ChatResult has a flat shape — access .message directly.
+console.log(response.message.content);
 ```
 
 ---
@@ -39,6 +40,8 @@ console.log(response.content);
 ## Images
 
 The `client.images` namespace unifies image generation (e.g., DALL-E) and editing.
+
+### Image Generation
 
 ```typescript
 // Generate an image
@@ -49,10 +52,11 @@ const result = await client.images.generate({
 });
 
 console.log(result.data[0].url);
+```
 
 ### Image Analysis (Vision)
 
-Analyze images using multi-modal models like GPT-4o or Claude 3.5 Sonnet.
+Analyze images using multi-modal models like GPT-4o or Claude 3.5 Sonnet. The SDK normalizes the request format — OpenAI uses `image_url` content parts, Anthropic uses `image` source blocks, and Gemini uses `inlineData` — but you always call the same method.
 
 ```typescript
 const analysis = await client.images.analyze({
@@ -61,6 +65,7 @@ const analysis = await client.images.analyze({
     prompt: 'Extract the data from this chart.'
 });
 
+// ImageAnalysisResult returns .content directly (not wrapped in .message).
 console.log(analysis.content);
 ```
 
@@ -68,24 +73,47 @@ console.log(analysis.content);
 
 ## Audio
 
-The `client.audio` namespace provides Text-to-Speech (TTS) capabilities.
+The `client.audio` namespace provides Text-to-Speech (TTS) and Transcription (STT) capabilities.
+
+### Text-to-Speech
 
 ```typescript
 import { Tekimax, OpenAIProvider } from 'tekimax-ts';
 
 const client = new Tekimax({
-    provider: new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY }) 
+    provider: new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY! })
 });
 
 // Convert text to speech
 const audio = await client.audio.speak({
   model: 'tts-1',
   input: 'Hello, this is a generated voice.',
+  // "alloy" is a neutral, balanced voice — good for demos.
+  // Other options: echo, fable, onyx, nova, shimmer.
   voice: 'alloy',
 });
 
-// Returns an ArrayBuffer
+// Returns an ArrayBuffer — write to a file or pipe to an audio player.
 console.log(`Generated ${audio.buffer.byteLength} bytes of audio`);
+```
+
+### Audio Transcription (Speech-to-Text)
+
+```typescript
+import fs from 'node:fs';
+
+// Transcribe audio to text using Whisper
+// TranscriptionOptions.file accepts File, Blob, or Buffer.
+const transcription = await client.audio.transcribe({
+  file: fs.readFileSync('recording.mp3'),
+  model: 'whisper-1',
+  // 'verbose_json' returns timestamps and segment-level data,
+  // which is useful for subtitle generation or word-level alignment.
+  response_format: 'verbose_json',
+});
+
+console.log(transcription.text);
+console.log(transcription.segments); // [{ start, end, text }, ...]
 ```
 
 ---
@@ -100,7 +128,7 @@ The `client.videos` namespace handles video generation and analysis.
 // Generate a video from a prompt
 const video = await client.videos.generate({
   prompt: 'A cat running in a field of sunflowers',
-  model: 'luma-dream-machine', 
+  model: 'luma-dream-machine',
 });
 
 console.log(video.data[0].url);
@@ -108,17 +136,19 @@ console.log(video.data[0].url);
 
 ### Video Analysis (Gemini)
 
-We support native video analysis using Gemini's multi-modal capabilities.
+We support native video analysis using Gemini's multi-modal capabilities. Gemini is currently the only provider with built-in video understanding — the SDK downloads the video and converts it to `inlineData` automatically.
 
 ```typescript
 import { Tekimax, GeminiProvider } from 'tekimax-ts';
 
 const client = new Tekimax({
-    provider: new GeminiProvider({ apiKey: process.env.GEMINI_API_KEY })
+    provider: new GeminiProvider({ apiKey: process.env.GOOGLE_API_KEY! })
 });
 
 const analysis = await client.videos.analyze({
     video: 'https://cdn.example.com/beach_sunset.mp4',
+    // gemini-1.5-flash is preferred for video analysis because it has
+    // a 1M token context window at lower cost than gemini-1.5-pro.
     model: 'gemini-1.5-flash',
     prompt: 'Describe the scene and the lighting conditions.'
 });

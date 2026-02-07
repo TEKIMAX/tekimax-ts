@@ -60,6 +60,8 @@
         "eventsource-parser": "^3.0.6",
         "ollama": "^0.6.3",
         "openai": "^6.17.0",
+        "signal-exit": "^4.1.0",
+        "ws": "^8.19.0",
         "zod": "^3.23.8"
     },
     "devDependencies": {

@@ -9,64 +9,79 @@ The Tekimax SDK is built around two main primitives: the `Tekimax` client and th
 
 ## The Client
 
-The `Tekimax` client is the unified entry point. It organizes capabilities into **Namespaces**.
+The `Tekimax` client is the unified entry point. It organizes capabilities into **Namespaces** — one per modality — so that auto-complete guides you to the right method without memorizing the API surface.
 
 ```typescript
 const client = new Tekimax({ provider });
 
 // Namespaces
-client.text   // Chat, Embeddings
-client.images // Generation, Editing, Analysis
-client.audio  // Text-to-Speech (TTS)
+client.text   // Chat, Completions, Embeddings
+client.images // Generation, Editing, Analysis (Vision)
+client.audio  // Text-to-Speech (TTS), Transcription (STT)
 client.videos // Generation, Analysis
 ```
 
 ### Text (Chat)
 
-The `client.text` namespace provides a standard chat completion interface.
+The `client.text` namespace provides two equivalent interfaces. Use whichever reads better in your codebase.
 
 ```typescript
+// OpenAI-style dot-chain (aliases to the same method internally)
 const response = await client.text.chat.completions.create({
   model: 'gpt-4o',
   messages: [{ role: 'user', content: 'Hello!' }]
 });
+
+// Direct method
+const response = await client.text.generate({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: 'Hello!' }]
+});
+
+// Both return ChatResult — no choices array.
+console.log(response.message.content);
 ```
 
 ## Providers
 
 Providers act as translation layers. They convert strict Tekimax types into the specific format required by the upstream API (e.g., OpenAI, Anthropic) and normalize the response back.
 
-All providers implement the `AIProvider` interface:
+All providers implement the `AIProvider` interface. Only `chat` and `chatStream` are required — the multi-modal methods are optional so that text-only providers (like Grok) don't need to stub them out.
 
 ```typescript
 interface AIProvider {
-  chat(
-    request: ChatCompletionRequest
-  ): Promise<ChatCompletionResponse>;
+  name: string;
 
-  chatStream(
-    request: ChatCompletionRequest
-  ): AsyncIterable<ChatCompletionChunk>;
+  // Required — every provider must support text chat.
+  chat(options: ChatOptions): Promise<ChatResult>;
+  chatStream(options: ChatOptions): AsyncIterable<StreamChunk>;
+
+  // Optional — providers implement these to opt in to each modality.
+  generateImage?(options: ImageGenerationOptions): Promise<ImageResult>;
+  editImage?(options: ImageEditOptions): Promise<ImageResult>;
+  analyzeImage?(options: ImageAnalysisOptions): Promise<ImageAnalysisResult>;
+  generateSpeech?(options: SpeechGenerationOptions): Promise<SpeechResult>;
+  transcribeAudio?(options: TranscriptionOptions): Promise<TranscriptionResult>;
+  generateVideo?(options: VideoGenerationOptions): Promise<VideoResult>;
+  analyzeVideo?(options: VideoAnalysisOptions): Promise<VideoAnalysisResult>;
 }
 ```
 
 ## Streaming
 
-Streaming is handled automatically. If you set `stream: true`, the client returns an AsyncIterable.
+Streaming uses a **separate method** (`createStream` / `generateStream`) rather than a `stream: true` flag. This lets TypeScript infer the correct return type at the call site — `ChatResult` for non-streaming, `AsyncGenerator<StreamChunk>` for streaming — without union-type gymnastics.
 
 ```typescript
-const stream = await client.text.chat.completions.create({
+// createStream returns an AsyncGenerator directly — no await needed.
+const stream = client.text.chat.completions.createStream({
   model: 'gpt-4o',
   messages: [
     { role: 'user', content: 'Tell me a story' }
   ],
-  stream: true,
 });
 
 for await (const chunk of stream) {
-  process.stdout.write(
-    chunk.choices[0]?.delta?.content || ''
-  );
+  process.stdout.write(chunk.delta);
 }
 ```
 
@@ -82,7 +97,7 @@ See the [React Integration](/docs/guides/react) guide for more details.
 
 ## Universal Features
 
-The SDK normalizes advanced features across all providers (OpenAI, Anthropic, Gemini, Ollama), ensuring a consistent API experience.
+The SDK normalizes advanced features across all providers (OpenAI, Anthropic, Gemini, Ollama, Grok, OpenRouter), ensuring a consistent API experience.
 
 ### Reasoning (Thinking)
 
@@ -91,26 +106,29 @@ Support for "Thinking" models (like DeepSeek R1) is built-in. Use the `think: tr
 ```typescript
 const response = await client.text.chat.completions.create({
   model: 'deepseek-r1',
-  messages: [...],
-  think: true
+  messages: [{ role: 'user', content: 'Solve this logic puzzle...' }],
+  think: true // Enable reasoning capture
 });
 
-console.log(response.choices[0].message.thinking); // Access reasoning
+// The thinking field captures the model's chain-of-thought separately
+// from the final answer, so you can display reasoning in a collapsible UI.
+console.log(response.message.thinking); // Reasoning trace
+console.log(response.message.content);  // Final answer
 ```
 
 See the [Reasoning Models](/docs/guides/thinking) guide for more details.
 
 ### Tool Calling
 
-Tool calling is standardized. You define tools once, and the SDK handles the specific format for each provider (e.g., mapping to Gemini's `functionDeclarations` or Anthropic's `tool_use`).
+Tool calling is standardized. You define tools once using the OpenAI function-calling schema, and the SDK handles the specific format for each provider (e.g., mapping to Gemini's `functionDeclarations` or Anthropic's `tool_use` content blocks).
 
 ```typescript
 const client = new Tekimax({
-  provider: new GeminiProvider({ apiKey: '...' }) // Works with Anthropic, OpenAI, etc.
+  provider: new GeminiProvider({ apiKey: process.env.GOOGLE_API_KEY! })
 });
 
 const response = await client.text.chat.completions.create({
-  model: 'gemini-pro',
+  model: 'gemini-1.5-pro',
   messages: [{ role: 'user', content: 'What is the weather in Tokyo?' }],
   tools: [{
     type: 'function',
@@ -126,9 +144,42 @@ const response = await client.text.chat.completions.create({
   }]
 });
 
-// Uniform access to tool calls
-const toolCalls = response.choices[0].message.tool_calls;
+// Uniform access — same shape regardless of provider.
+// Anthropic returns tool_use blocks, Gemini returns functionCall parts,
+// but Tekimax normalizes them all to this structure.
+const toolCalls = response.message.toolCalls;
 if (toolCalls) {
   console.log(toolCalls[0].function.name); // "get_weather"
+  console.log(toolCalls[0].function.arguments); // '{"location":"Tokyo"}'
 }
+```
+
+### Agentic Loops with `generateText`
+
+For multi-step tool-calling workflows, the SDK provides a `generateText` utility that handles the tool execution loop for you.
+
+```typescript
+import { generateText } from 'tekimax-ts';
+
+const result = await generateText({
+  adapter: provider,
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: 'What is the weather in Tokyo?' }],
+  tools: {
+    get_weather: {
+      type: 'function',
+      function: {
+        name: 'get_weather',
+        description: 'Get current weather',
+        parameters: { type: 'object', properties: { location: { type: 'string' } } }
+      },
+      execute: async ({ location }) => ({ temp: 22, unit: 'C', location })
+    }
+  },
+  // maxSteps controls how many chat round-trips the agent can take.
+  // This prevents runaway loops — the default is 1 (no looping).
+  maxSteps: 5
+});
+
+console.log(result.text); // Final answer after tool execution
 ```

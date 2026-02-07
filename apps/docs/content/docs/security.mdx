@@ -11,9 +11,9 @@ Tekimax SDK is designed with a "Secure by Default" philosophy, leveraging modern
 
 ### Chainguard Images
 Our runtime and build artifacts are based on [Chainguard Images](https://www.chainguard.dev/), which are:
-- **Minimal**: Stripped of operating system shell, package managers, and other unnecessary binaries.
+- **Minimal**: Stripped of operating system shell, package managers, and other unnecessary binaries. This eliminates entire categories of exploits (shell injection, privilege escalation via installed tooling).
 - **Hardened**: Designed to reduce the attack surface significantly.
-- **Zero CVEs**: Rebuilt daily to patch upstream vulnerabilities immediately.
+- **Zero CVEs**: Rebuilt daily to patch upstream vulnerabilities immediately — so you inherit fixes without waiting for a manual image update.
 
 ### Artifact Signing (Cosign)
 All build artifacts are signed using **Cosign** (part of the Sigstore project). This allows you to verify that the SDK code you are running is exactly what was built by our CI/CD pipeline, with no tampering.
@@ -36,29 +36,30 @@ Unlike standard SDKs, Tekimax enforces strict runtime validation using **Zod** s
 
 ### Strict TypeScript Configuration
 The SDK is built with the strictest TypeScript settings enabled to prevent common classes of bugs:
-- `strict: true`: Enables strict null checks and no implicit keys.
-- `noUncheckedIndexedAccess: true`: Forces developers to handle cases where array/object access might return `undefined`, preventing runtime crashes.
+- `strict: true`: Enables strict null checks and no implicit any — catches `null`/`undefined` bugs at compile time instead of runtime.
+- `noUncheckedIndexedAccess: true`: Forces developers to handle cases where array/object access might return `undefined`. Without this flag, `arr[0]` has type `T`; with it, the type is `T | undefined`, preventing silent runtime crashes on empty arrays.
 
 ### Minimal Dependency Footprint
-We aggressively minimize third-party dependencies to reduce the potential attack surface.
-- **Core Dependencies**: Only `zod` (validation) and `eventsource-parser` (streaming) are used in the core runtime.
-- **Zero bloat**: No heavy frameworks or unused utility libraries.
+We aggressively minimize third-party dependencies to reduce the potential attack surface. Each dependency is a potential supply-chain vector, so fewer is better.
+- **Core Runtime**: `zod` (validation) and `eventsource-parser` (SSE streaming).
+- **Provider SDKs**: `openai`, `@anthropic-ai/sdk`, `@google/generative-ai`, `ollama` — one per provider, each an official first-party package.
+- **Zero bloat**: No heavy frameworks, lodash, or unused utility libraries.
 
 ### Configuration Best Practices
-Never hardcode API keys. The SDK is designed to read secrets from the environment automatically.
+Never hardcode API keys. All providers require explicit `apiKey` parameters — they do **not** auto-read environment variables. This is intentional: implicit env-var reading can lead to accidental key leakage across environments (e.g., a CI build picking up production keys).
 
 ```typescript
-// ✅ Good: Automatic Environment Loading
+// ✅ Good: Explicit environment variable
 const client = new Tekimax({
   provider: new AnthropicProvider({
-     // Reads process.env.ANTHROPIC_KEY automatically
+     apiKey: process.env.ANTHROPIC_API_KEY!
   })
 });
 
-// ❌ Bad: Hardcoding Secrets
+// ❌ Bad: Hardcoded secret
 const client = new Tekimax({
   provider: new AnthropicProvider({
-    apiKey: "sk-..." // Do not do this
+    apiKey: "sk-ant-..." // Never do this — it will end up in source control.
   })
 });
 ```

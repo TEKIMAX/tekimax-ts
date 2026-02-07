@@ -1,5 +1,5 @@
 import { AIProvider } from '../core/adapter'
-import { SpeechGenerationOptions, SpeechResult } from '../core/types'
+import { SpeechGenerationOptions, SpeechResult, TranscriptionOptions, TranscriptionResult } from '../core/types'
 
 export class AudioNamespace {
     constructor(private provider: AIProvider) { }
@@ -13,4 +13,15 @@ export class AudioNamespace {
         }
         return this.provider.generateSpeech(options)
     }
+
+    /**
+     * Transcribe audio to text.
+     */
+    async transcribe(options: TranscriptionOptions): Promise<TranscriptionResult> {
+        if (!this.provider.transcribeAudio) {
+            throw new Error(`Provider '${this.provider.name}' does not support audio transcription`)
+        }
+        return this.provider.transcribeAudio(options)
+    }
 }
+

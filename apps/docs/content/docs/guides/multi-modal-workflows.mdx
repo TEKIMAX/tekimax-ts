@@ -3,7 +3,7 @@ title: Multi-Modal Workflows
 description: Combine Text, Image, Audio, and Video for complex workflows.
 ---
 
-One of Tekimax's strengths is the ability to combine different modalities using a consistent interface.
+One of Tekimax's strengths is the ability to combine different modalities using a consistent interface. Each step below chains the output of one namespace into the input of another.
 
 ---
 
@@ -14,21 +14,23 @@ Generate an image based on a detailed description created by an LLM.
 ```typescript
 import { Tekimax, OpenAIProvider } from 'tekimax-ts';
 
-const client = new Tekimax({ provider: new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY }) });
+const client = new Tekimax({ provider: new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY! }) });
 
-// 1. Generate prompt (domain: text)
+// 1. Generate a creative prompt (text namespace)
 const promptResponse = await client.text.chat.completions.create({
   model: "gpt-4o",
   messages: [{ role: "user", content: "Describe a surreal landscape with floating islands in 2 sentences." }],
 });
 
-const imagePrompt = promptResponse.content;
+// ChatResult returns .message.content — no choices array.
+const imagePrompt = promptResponse.message.content;
 console.log(`Generating image for: ${imagePrompt}`);
 
-// 2. Generate image (domain: images)
+// 2. Generate the image (images namespace)
 const imageResponse = await client.images.generate({
     model: "dall-e-3",
     prompt: imagePrompt,
+    // "hd" gives 2x the detail at higher cost — use "standard" for drafts.
     quality: "hd"
 });
 
@@ -40,10 +42,11 @@ console.log(imageResponse.data[0].url);
 
 ## Image to Text (Vision)
 
-Analyze an image using a vision model. This uses the `images` domain, but the output modality is text.
+Analyze an image using a vision model. This uses the `images` namespace, but the output modality is text.
 
 ```typescript
-// Analyze (domain: images, output: text)
+// ImageAnalysisResult returns .content directly (not wrapped in .message),
+// because there's no message metadata — just the extracted text.
 const description = await client.images.analyze({
     model: "gpt-4o",
     prompt: "What colors are dominant in this image?",
@@ -60,18 +63,58 @@ console.log(description.content);
 Read out generated text.
 
 ```typescript
-// 1. Generate Story
+// 1. Generate Story (text namespace)
 const story = await client.text.chat.completions.create({
     model: "gpt-4o",
     messages: [{ role: "user", content: "Tell a very short story." }]
 });
 
-// 2. Convert to Speech
+// 2. Convert to Speech (audio namespace)
 const audio = await client.audio.speak({
     model: "tts-1",
-    input: story.content,
+    input: story.message.content,
+    // "alloy" is a neutral voice good for narration.
+    // Choose "nova" or "shimmer" for a warmer tone.
     voice: "alloy"
 });
 
+// Returns an ArrayBuffer — pipe to a file or audio player.
 console.log(`Generated ${audio.buffer.byteLength} bytes of audio.`);
+```
+
+---
+
+## Video Analysis Pipeline
+
+Combine Gemini's video understanding with GPT-4o for a two-stage analysis.
+
+```typescript
+import { Tekimax, GeminiProvider, OpenAIProvider } from 'tekimax-ts';
+
+// Use Gemini for video analysis (it's the only provider with native video support)
+const geminiClient = new Tekimax({
+    provider: new GeminiProvider({ apiKey: process.env.GOOGLE_API_KEY! })
+});
+
+// 1. Analyze video (videos namespace)
+const analysis = await geminiClient.videos.analyze({
+    model: 'gemini-1.5-flash',
+    video: 'https://cdn.example.com/product_demo.mp4',
+    prompt: 'List every product feature shown in this video.'
+});
+
+// 2. Use the analysis as context for a different model (text namespace)
+const openaiClient = new Tekimax({
+    provider: new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY! })
+});
+
+const summary = await openaiClient.text.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [
+        { role: 'system', content: 'You are a marketing copywriter.' },
+        { role: 'user', content: `Based on this video analysis, write a product description:\n\n${analysis.content}` }
+    ]
+});
+
+console.log(summary.message.content);
 ```

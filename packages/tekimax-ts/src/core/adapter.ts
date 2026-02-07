@@ -12,7 +12,11 @@ import type {
     VideoGenerationOptions,
     VideoResult,
     VideoAnalysisOptions,
-    VideoAnalysisResult
+    VideoAnalysisResult,
+    TranscriptionOptions,
+    TranscriptionResult,
+    EmbeddingOptions,
+    EmbeddingResult
 } from './types'
 
 export interface AIProvider {
@@ -51,6 +55,11 @@ export interface AIProvider {
     generateSpeech?: (options: SpeechGenerationOptions) => Promise<SpeechResult>
 
     /**
+     * Transcribe audio to text (STT).
+     */
+    transcribeAudio?: (options: TranscriptionOptions) => Promise<TranscriptionResult>
+
+    /**
      * Generate a video.
      */
     generateVideo?: (options: VideoGenerationOptions) => Promise<VideoResult>
@@ -59,5 +68,10 @@ export interface AIProvider {
      * Analyze a video (Video-to-Text).
      */
     analyzeVideo?: (options: VideoAnalysisOptions) => Promise<VideoAnalysisResult>
+
+    /**
+     * Generate embeddings for text input(s).
+     */
+    embed?: (options: EmbeddingOptions) => Promise<EmbeddingResult>
 }
 

@@ -1,0 +1,77 @@
+---
+title: Cost Tracking
+description: Estimate API costs by model and token usage.
+---
+
+# Cost Tracking
+
+The `estimateCost` utility maps token usage to estimated USD costs using a built-in price table for ~25 popular models.
+
+## Basic Usage
+
+```typescript
+import { estimateCost } from 'tekimax-ts'
+
+const result = await client.text.generate({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: 'Hello!' }]
+})
+
+const cost = estimateCost(result.usage, 'gpt-4o')
+if (cost) {
+  console.log(`Input:  $${cost.inputCost.toFixed(6)}`)
+  console.log(`Output: $${cost.outputCost.toFixed(6)}`)
+  console.log(`Total:  $${cost.totalCost.toFixed(6)}`)
+}
+```
+
+## Supported Models
+
+Pricing is included for OpenAI (`gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `o1`, `o3-mini`), Anthropic (`claude-3-5-sonnet`, `claude-3-opus`, `claude-3-haiku`), Gemini (`gemini-1.5-pro`, `gemini-1.5-flash`, `gemini-2.0-flash`), Grok (`grok-2`), and popular OpenRouter models (`deepseek-r1`, `llama-3-70b`).
+
+Use `getSupportedCostModels()` to list all models in the price table:
+
+```typescript
+import { getSupportedCostModels } from 'tekimax-ts'
+
+console.log(getSupportedCostModels())
+// ['gpt-4o', 'gpt-4o-mini', 'claude-3-5-sonnet-latest', ...]
+```
+
+## Custom Models
+
+Register your own models or override existing prices:
+
+```typescript
+import { registerModelPrice } from 'tekimax-ts'
+
+registerModelPrice('my-fine-tuned-model', {
+  inputPerMillion: 3.00,
+  outputPerMillion: 6.00,
+})
+
+// Now estimateCost works with your model
+const cost = estimateCost(result.usage, 'my-fine-tuned-model')
+```
+
+## Cumulative Tracking
+
+Track spending across multiple calls:
+
+```typescript
+let totalSpend = 0
+
+for (const prompt of prompts) {
+  const result = await client.text.generate({ model: 'gpt-4o', messages: [{ role: 'user', content: prompt }] })
+  const cost = estimateCost(result.usage, 'gpt-4o')
+  if (cost) totalSpend += cost.totalCost
+}
+
+console.log(`Session total: $${totalSpend.toFixed(4)}`)
+```
+
+## Notes
+
+- **Returns `null` for unknown models** — this is intentional. It avoids throwing when you use a model that isn't in the price table. Check the return value.
+- **Prices are estimates** — they reflect published list prices and may not account for volume discounts, cached tokens, or provider-specific billing variations.
+- **Prices are per 1M tokens** — the function does the math internally using `usage.promptTokens` and `usage.completionTokens`.

@@ -11,13 +11,13 @@ These models expose their internal "chain of thought" process, allowing you to d
 
 ## Enabling Thinking
 
-To enable reasoning, simply pass `think: true` in your chat options.
+To enable reasoning, pass `think: true` in your chat options.
 
 ```typescript
 const response = await client.text.chat.completions.create({
   model: 'deepseek-r1',
   messages: [{ role: 'user', content: 'Solve this logic puzzle...' }],
-  think: true // Enable reasoning capture
+  think: true // Tells the provider to return reasoning data
 });
 ```
 
@@ -26,8 +26,8 @@ const response = await client.text.chat.completions.create({
 The reasoning content is available in the `thinking` field of the message.
 
 ```typescript
-const thinking = response.choices[0].message.thinking;
-const content = response.choices[0].message.content;
+const thinking = response.message.thinking;
+const content = response.message.content;
 
 console.log('--- Reasoning ---');
 console.log(thinking);
@@ -37,43 +37,56 @@ console.log(content);
 
 ### Streaming Support
 
-Thinking is also supported in streaming mode. The `thinking` delta will be emitted as the model "thinks".
+Thinking is also supported in streaming mode. Use `createStream` — the `thinking` delta is emitted separately from the content `delta` so you can render them in different UI areas.
 
 ```typescript
-const stream = await client.text.chat.completions.createStream({
+// createStream returns an AsyncGenerator — no await.
+const stream = client.text.chat.completions.createStream({
   model: 'deepseek-r1',
+  messages: [{ role: 'user', content: 'Solve: 2x + 3 = 11' }],
   think: true,
-  // ...
 });
 
 for await (const chunk of stream) {
+  // Thinking deltas arrive first, then content deltas.
   if (chunk.thinking) {
-    process.stdout.write(chunk.thinking); // Stream reasoning
+    process.stdout.write(`[think] ${chunk.thinking}`);
   }
   if (chunk.delta) {
-    process.stdout.write(chunk.delta); // Stream answer
+    process.stdout.write(chunk.delta);
   }
 }
 ```
 
 ## Provider Support
 
-| Provider | Native Support | Implementation Details |
+The SDK handles three distinct implementation patterns for reasoning, so your code stays the same regardless of provider.
+
+| Provider | Support | How It Works |
 | :--- | :--- | :--- |
-| **Ollama** | ✅ Yes | Uses native `thinking` field from Ollama API. |
-| **OpenAI** | 🚧 Partial | Models like `o1` encapsulate reasoning; extraction depends on model version. |
-| **Generic** | 🔄 Emulated | For models that output `<think>` tags (like DeepSeek via non-native API), the SDK creates a unified `thinking` field. |
+| **Ollama** | ✅ Native | Ollama returns a dedicated `thinking` field in its response. The SDK passes `think: true` directly to the Ollama API. |
+| **OpenAI** | 🚧 Model-dependent | Models like `o1` encapsulate reasoning internally. Extraction depends on the model version and API support. |
+| **Generic** | 🔄 Emulated | Models that output `<think>` XML tags in their content (like DeepSeek R1 via OpenRouter) are parsed by the SDK using the `parseThinking` utility. |
 
 ## Utility: Parsing Raw Thinking
 
-If you are using a provider that outputs raw `<think>` tags in the content instead of a structured field, the SDK provides a utility to parse it.
+If you're processing raw model output that contains `<think>` tags — for example, from an OpenRouter response — the SDK provides a `parseThinking` utility that handles three edge cases:
 
 ```typescript
 import { parseThinking } from 'tekimax-ts';
 
-const rawContent = "<think>Calculating...</think> The answer is 42.";
-const { think, rest } = parseThinking(rawContent);
+// Case 1: Complete think block
+const complete = parseThinking("<think>Calculating...</think> The answer is 42.");
+// { think: "Calculating...", rest: "The answer is 42." }
 
-console.log(think); // "Calculating..."
-console.log(rest);  // " The answer is 42."
+// Case 2: Streaming — tag opened but not closed yet.
+// This happens mid-stream when the model is still reasoning.
+const streaming = parseThinking("<think>Still working on it...");
+// { think: "Still working on it...", rest: "" }
+
+// Case 3: No think tag at all
+const none = parseThinking("Just a normal response.");
+// { think: null, rest: "Just a normal response." }
 ```
+
+This utility is used internally by the SDK, but it's exported so you can use it in custom streaming implementations.

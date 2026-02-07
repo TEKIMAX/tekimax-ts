@@ -1,0 +1,146 @@
+---
+title: Middleware & Hooks
+description: Intercept and transform provider requests and responses.
+---
+
+# Middleware & Hooks
+
+The `wrapProvider` function applies middleware interceptors to any provider. Middleware can log, cache, transform, or monitor every chat call without modifying your business logic.
+
+## Basic Usage
+
+```typescript
+import { Tekimax, OpenAIProvider, wrapProvider, type Middleware } from 'tekimax-ts'
+
+const logger: Middleware = {
+  name: 'logger',
+  beforeChat: async (options) => {
+    console.log(`→ ${options.model} (${options.messages.length} messages)`)
+    return options
+  },
+  afterChat: async (result, options) => {
+    console.log(`← ${options.model} (${result.usage?.totalTokens} tokens)`)
+    return result
+  },
+}
+
+const provider = wrapProvider(
+  new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY! }),
+  [logger]
+)
+
+const client = new Tekimax({ provider })
+// Every call now logs request → response
+```
+
+## Middleware Interface
+
+```typescript
+interface Middleware {
+  name?: string
+  beforeChat?(options: ChatOptions): Promise<ChatOptions> | ChatOptions
+  afterChat?(result: ChatResult, options: ChatOptions): Promise<ChatResult> | ChatResult
+  onError?(error: Error, options: ChatOptions): Promise<ChatResult | void> | ChatResult | void
+  onStreamChunk?(chunk: StreamChunk, options: ChatOptions): StreamChunk
+}
+```
+
+All hooks are optional — implement only what you need.
+
+## Execution Order
+
+Middleware follows the **onion model**:
+
+- `beforeChat` runs **first to last** (order of the array)
+- `afterChat` runs **last to first** (reverse order)
+- `onError` runs first to last — the first middleware to return a `ChatResult` recovers the error
+
+```typescript
+const provider = wrapProvider(base, [
+  authMiddleware,    // beforeChat runs 1st, afterChat runs 3rd
+  cachingMiddleware, // beforeChat runs 2nd, afterChat runs 2nd
+  loggingMiddleware, // beforeChat runs 3rd, afterChat runs 1st
+])
+```
+
+## Built-in: Logging Middleware
+
+A ready-to-use logging middleware is included:
+
+```typescript
+import { wrapProvider, loggingMiddleware } from 'tekimax-ts'
+
+const provider = wrapProvider(base, [
+  loggingMiddleware({ prefix: '[ai]' })
+])
+
+// Output:
+// [ai] → gpt-4o (2 messages)
+// [ai] ← gpt-4o (150 tokens, 832ms)
+```
+
+## Stream Interception
+
+Use `onStreamChunk` to intercept streaming tokens:
+
+```typescript
+const tokenCounter: Middleware = {
+  name: 'token-counter',
+  onStreamChunk: (chunk, options) => {
+    if (chunk.delta) {
+      process.stdout.write(chunk.delta) // Real-time logging
+    }
+    return chunk // Pass through unchanged
+  },
+}
+```
+
+## Error Recovery
+
+Use `onError` to recover from failures gracefully:
+
+```typescript
+const fallback: Middleware = {
+  name: 'fallback',
+  onError: async (error, options) => {
+    if ((error as any).status === 429) {
+      // Rate limited — return a cached or default response
+      return {
+        message: { role: 'assistant', content: 'Service busy, please try again.' },
+        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 }
+      }
+    }
+    // Other errors: don't return anything → error continues to propagate
+  },
+}
+```
+
+## Composing Multiple Middleware
+
+Stack middleware for production-grade observability:
+
+```typescript
+import { wrapProvider, loggingMiddleware, createRetryProvider, estimateCost } from 'tekimax-ts'
+
+const costTracker: Middleware = {
+  name: 'cost-tracker',
+  afterChat: async (result, options) => {
+    const cost = estimateCost(result.usage, options.model)
+    if (cost) console.log(`💰 $${cost.totalCost.toFixed(6)}`)
+    return result
+  },
+}
+
+// Apply retry first (innermost), then middleware (outermost)
+const base = new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY! })
+const resilient = createRetryProvider(base, { maxRetries: 3 })
+const provider = wrapProvider(resilient, [loggingMiddleware(), costTracker])
+
+const client = new Tekimax({ provider })
+```
+
+## Notes
+
+- **Multi-modal pass-through**: Middleware currently applies to `chat()` and `chatStream()` only. Image, audio, and video calls pass through unmodified.
+- **Modify requests**: `beforeChat` can modify the options before they reach the provider — use this for injecting system prompts, headers, or request transforms.
+- **Modify responses**: `afterChat` can modify the result before it reaches your code — use this for caching, cost tracking, or response transforms.

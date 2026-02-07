@@ -5,7 +5,7 @@ description: Access hundreds of models via OpenRouter.
 
 # OpenRouter Adapter
 
-The `tekimax-openrouter` package allows you to use OpenRouter as a gateway to virtually any LLM.
+The OpenRouter adapter routes requests through [OpenRouter](https://openrouter.ai), a unified gateway to hundreds of LLMs from different providers. Like the Grok adapter, it reuses the `openai` npm package since OpenRouter exposes an OpenAI-compatible API at `https://openrouter.ai/api/v1`.
 
 ## Installation
 
@@ -16,23 +16,64 @@ npm install tekimax-ts
 ## Usage
 
 ```typescript
-import { Tekimax } from 'tekimax-ts';
-import { OpenRouterProvider } from 'tekimax-ts';
+import { Tekimax, OpenRouterProvider } from 'tekimax-ts';
 
 const client = new Tekimax({
   provider: new OpenRouterProvider({
-    apiKey: process.env.OPENROUTER_API_KEY,
-    siteUrl: 'https://mysite.com', // Optional: for OpenRouter rankings
-    siteName: 'My App',            // Optional
+    apiKey: process.env.OPENROUTER_API_KEY!,
   })
 });
 
 const result = await client.text.chat.completions.create({
+  // OpenRouter requires the full vendor/model-name format.
   model: 'nousresearch/hermes-2-pro-llama-3-8b',
   messages: [{ role: 'user', content: 'Hello OpenRouter' }]
 });
+
+console.log(result.message.content);
+```
+
+## Streaming
+
+```typescript
+const stream = client.text.chat.completions.createStream({
+  model: 'anthropic/claude-3.5-sonnet',
+  messages: [{ role: 'user', content: 'Write a haiku about programming' }]
+});
+
+for await (const chunk of stream) {
+  process.stdout.write(chunk.delta);
+}
+```
+
+## Tool Calling
+
+Tool calling works with OpenRouter models that support it, using the standard interface.
+
+```typescript
+const result = await client.text.chat.completions.create({
+  model: 'openai/gpt-4o',
+  messages: [{ role: 'user', content: 'What is the weather in Tokyo?' }],
+  tools: [{
+    type: 'function',
+    function: {
+      name: 'get_weather',
+      description: 'Get current weather',
+      parameters: { type: 'object', properties: { location: { type: 'string' } } }
+    }
+  }]
+});
+
+console.log(result.message.toolCalls);
 ```
 
 ## Model Names
 
-OpenRouter requires the full model ID (e.g., `vendor/model-name`). Check [OpenRouter Docs](https://openrouter.ai/docs) for the list.
+OpenRouter requires the full model ID in `vendor/model-name` format (e.g., `anthropic/claude-3.5-sonnet`, `openai/gpt-4o`, `google/gemini-pro`). Check the [OpenRouter Models page](https://openrouter.ai/docs#models) for the complete list.
+
+## Notes
+
+- **`HTTP-Referer` Header**: OpenRouter [requires](https://openrouter.ai/docs#api-keys) an `HTTP-Referer` header for attribution and rate-limit tracking. The adapter sets this to `https://tekimax.com` automatically, so you don't need to configure it.
+- **`X-Title` Header**: Also set automatically to `Tekimax SDK` for attribution in OpenRouter's dashboard.
+- **Text-only**: OpenRouter is a text routing layer — image generation, TTS, and video are not supported. Calling those modalities will throw a capability error.
+- **Why reuse `openai`?** OpenRouter mirrors the OpenAI API contract exactly, so we get automatic retries, streaming, and error types for free without maintaining a custom HTTP client.
