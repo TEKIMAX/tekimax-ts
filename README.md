@@ -38,52 +38,6 @@ The **Tekimax SDK** solves the fragmentation of AI APIs. Instead of rewriting yo
 - **Redis Adapter** _(optional)_: Response caching, rate limiting, token budgets, and session storage with any Redis client.
 - **Convex Integration**: Provision and manage [Convex](https://convex.dev) projects, push schemas, set env vars, and deploy — all from code.
 
-### 🔴 Optional Redis Adapter
-
-No extra dependency — bring your own `ioredis`, `@upstash/redis`, or `node-redis`:
-
-```typescript
-import { ResponseCache, RateLimiter, TokenBudget, SessionStore } from 'tekimax-ts'
-import Redis from 'ioredis'
-
-const redis = new Redis(process.env.REDIS_URL)
-
-// Cache AI responses (avoid repeat API costs)
-const cache = new ResponseCache(redis, { ttl: 3600 })
-
-// Enforce rate limits per provider
-const limiter = new RateLimiter(redis, { maxRequests: 60, windowSeconds: 60 })
-
-// Track daily token spend
-const budget = new TokenBudget(redis, { maxTokens: 100_000, periodSeconds: 86400 })
-
-// Conversation state for serverless
-const sessions = new SessionStore(redis, { ttl: 1800 })
-```
-
-### 🟠 Convex Integration
-
-Provision real-time backends directly from the SDK:
-
-```typescript
-import { ConvexManager } from 'tekimax-ts'
-
-const convex = new ConvexManager({
-  accessToken: process.env.CONVEX_ACCESS_TOKEN,
-  teamId: process.env.CONVEX_TEAM_ID,  // optional — auto-resolved from token
-})
-
-// Provision a new project
-const project = await convex.createProject('my-ai-app')
-
-// Set env vars, generate deploy key, push schema
-await convex.setEnvVars(project.deploymentName, [
-  { name: 'OPENAI_API_KEY', value: process.env.OPENAI_API_KEY! },
-])
-const key = await convex.createDeployKey(project.deploymentName)
-convex.deploy(key, { projectDir: './my-convex-app' })
-```
-
 
 ## 💻 Installation
 
@@ -196,6 +150,52 @@ npx turbo test
 npx turbo dev --filter=docs
 ```
 
+## ⚡ Optional Redis Adapter
+
+No extra dependency — bring your own `ioredis`, `@upstash/redis`, or `node-redis`:
+
+```typescript
+import { ResponseCache, RateLimiter, TokenBudget, SessionStore } from 'tekimax-ts'
+import Redis from 'ioredis'
+
+const redis = new Redis(process.env.REDIS_URL)
+
+// Cache AI responses (avoid repeat API costs)
+const cache = new ResponseCache(redis, { ttl: 3600 })
+
+// Enforce rate limits per provider
+const limiter = new RateLimiter(redis, { maxRequests: 60, windowSeconds: 60 })
+
+// Track daily token spend
+const budget = new TokenBudget(redis, { maxTokens: 100_000, periodSeconds: 86400 })
+
+// Conversation state for serverless
+const sessions = new SessionStore(redis, { ttl: 1800 })
+```
+
+## 🟠 Convex Integration
+
+Provision real-time backends directly from the SDK:
+
+```typescript
+import { ConvexManager } from 'tekimax-ts'
+
+const convex = new ConvexManager({
+  accessToken: process.env.CONVEX_ACCESS_TOKEN,
+  teamId: process.env.CONVEX_TEAM_ID,  // optional — auto-resolved from token
+})
+
+// Provision a new project
+const project = await convex.createProject('my-ai-app')
+
+// Set env vars, generate deploy key, push schema
+await convex.setEnvVars(project.deploymentName, [
+  { name: 'OPENAI_API_KEY', value: process.env.OPENAI_API_KEY! },
+])
+const key = await convex.createDeployKey(project.deploymentName)
+convex.deploy(key, { projectDir: './my-convex-app' })
+```
+
 ## 🗺️ Roadmap
 
 | Feature | Description | Status |
@@ -205,7 +205,8 @@ npx turbo dev --filter=docs
 | **Assistants / Threads** | Stateful conversation management with persistence. Create threads, append messages, and resume conversations across sessions. | 🔜 Planned |
 | **Fine-tuning API** | Programmatic fine-tuning via OpenAI and Gemini APIs. Upload training data, launch jobs, and deploy custom models through a unified interface. | 🔜 Planned |
 | **Observability** | OpenTelemetry spans for every provider call — latency, tokens, cost, and error rate. | 🔜 Planned |
-| **Convex Integration** | Provision and manage [Convex](https://convex.dev) projects directly via the SDK. Spin up real-time backends for AI-powered apps. | 🔜 Planned |
+| **Convex Integration** | Provision and manage [Convex](https://convex.dev) projects directly via the SDK. Create projects, push schemas, set env vars, and deploy. | ✅ Shipped |
+| **Redis Adapter** | Optional response caching, rate limiting, token budget tracking, and session storage with any Redis-compatible client. | ✅ Shipped |
 
 > **Want to help?** Pick a feature and open a PR, or join the discussion in [GitHub Issues](https://github.com/TEKIMAX/tekimax-ts/issues).
 

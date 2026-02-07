@@ -24,33 +24,6 @@ npm install tekimax-ts
 - **Redis Adapter** _(optional)_: Response caching, rate limiting, token budgets, and session storage with any Redis client.
 - **Convex Integration**: Provision and manage [Convex](https://convex.dev) projects, push schemas, set env vars, and deploy — all from code.
 
-### 🔴 Optional Redis Adapter
-
-```typescript
-import { ResponseCache, RateLimiter, TokenBudget, SessionStore } from 'tekimax-ts'
-import Redis from 'ioredis'
-
-const redis = new Redis(process.env.REDIS_URL)
-const cache   = new ResponseCache(redis, { ttl: 3600 })       // Cache responses
-const limiter = new RateLimiter(redis, { maxRequests: 60 })    // Rate limit
-const budget  = new TokenBudget(redis, { maxTokens: 100_000 }) // Token budget
-const sessions = new SessionStore(redis, { ttl: 1800 })        // Sessions
-```
-
-### 🟠 Convex Integration
-
-```typescript
-import { ConvexManager } from 'tekimax-ts'
-
-const convex = new ConvexManager()  // reads CONVEX_ACCESS_TOKEN from env
-const project = await convex.createProject('my-ai-app')
-await convex.setEnvVars(project.deploymentName, [
-  { name: 'OPENAI_API_KEY', value: process.env.OPENAI_API_KEY! },
-])
-const key = await convex.createDeployKey(project.deploymentName)
-convex.deploy(key, { projectDir: './my-convex-app' })
-```
-
 ## 💻 Usage
 
 ### 1. Initialize the Client
@@ -188,6 +161,33 @@ At **Tekimax**, we believe security is a feature, not an afterthought.
 
 Supply chain attacks on the Node.js/npm ecosystem are increasingly common. By building on Chainguard, we ensure that the Tekimax SDK meets the highest standards of integrity and safety for enterprise and production use.
 
+## ⚡ Optional Redis Adapter
+
+```typescript
+import { ResponseCache, RateLimiter, TokenBudget, SessionStore } from 'tekimax-ts'
+import Redis from 'ioredis'
+
+const redis = new Redis(process.env.REDIS_URL)
+const cache   = new ResponseCache(redis, { ttl: 3600 })       // Cache responses
+const limiter = new RateLimiter(redis, { maxRequests: 60 })    // Rate limit
+const budget  = new TokenBudget(redis, { maxTokens: 100_000 }) // Token budget
+const sessions = new SessionStore(redis, { ttl: 1800 })        // Sessions
+```
+
+## 🟠 Convex Integration
+
+```typescript
+import { ConvexManager } from 'tekimax-ts'
+
+const convex = new ConvexManager()  // reads CONVEX_ACCESS_TOKEN from env
+const project = await convex.createProject('my-ai-app')
+await convex.setEnvVars(project.deploymentName, [
+  { name: 'OPENAI_API_KEY', value: process.env.OPENAI_API_KEY! },
+])
+const key = await convex.createDeployKey(project.deploymentName)
+convex.deploy(key, { projectDir: './my-convex-app' })
+```
+
 ## 🗺️ Roadmap
 
 | Feature | Description | Status |
@@ -197,7 +197,8 @@ Supply chain attacks on the Node.js/npm ecosystem are increasingly common. By bu
 | **Assistants / Threads** | Stateful conversation management with persistence. Create threads, append messages, and resume conversations across sessions. | 🔜 Planned |
 | **Fine-tuning API** | Programmatic fine-tuning via OpenAI and Gemini APIs. Upload training data, launch jobs, and deploy custom models through a unified interface. | 🔜 Planned |
 | **Observability** | OpenTelemetry spans for every provider call — latency, tokens, cost, and error rate. | 🔜 Planned |
-| **Convex Integration** | Provision and manage [Convex](https://convex.dev) projects directly via the SDK. Spin up real-time backends for AI-powered apps. | 🔜 Planned |
+| **Convex Integration** | Provision and manage [Convex](https://convex.dev) projects directly via the SDK. Create projects, push schemas, set env vars, and deploy. | ✅ Shipped |
+| **Redis Adapter** | Optional response caching, rate limiting, token budget tracking, and session storage with any Redis-compatible client. | ✅ Shipped |
 
 > **Want to help?** Pick a feature and open a PR, or join the discussion in [GitHub Issues](https://github.com/TEKIMAX/tekimax-ts/issues).
 
