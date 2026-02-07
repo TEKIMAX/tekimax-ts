@@ -35,7 +35,54 @@ The **Tekimax SDK** solves the fragmentation of AI APIs. Instead of rewriting yo
 - **Type-Safe**: Full TypeScript support with Zod validation for inputs and outputs.
 - **Multi-Modal**: Text, images, audio, video, and embeddings through a unified namespace API.
 - **React Ready**: Includes a `useChat` hook for instant UI integration.
+- **Redis Adapter** _(optional)_: Response caching, rate limiting, token budgets, and session storage with any Redis client.
+- **Convex Integration**: Provision and manage [Convex](https://convex.dev) projects, push schemas, set env vars, and deploy — all from code.
 
+### 🔴 Optional Redis Adapter
+
+No extra dependency — bring your own `ioredis`, `@upstash/redis`, or `node-redis`:
+
+```typescript
+import { ResponseCache, RateLimiter, TokenBudget, SessionStore } from 'tekimax-ts'
+import Redis from 'ioredis'
+
+const redis = new Redis(process.env.REDIS_URL)
+
+// Cache AI responses (avoid repeat API costs)
+const cache = new ResponseCache(redis, { ttl: 3600 })
+
+// Enforce rate limits per provider
+const limiter = new RateLimiter(redis, { maxRequests: 60, windowSeconds: 60 })
+
+// Track daily token spend
+const budget = new TokenBudget(redis, { maxTokens: 100_000, periodSeconds: 86400 })
+
+// Conversation state for serverless
+const sessions = new SessionStore(redis, { ttl: 1800 })
+```
+
+### 🟠 Convex Integration
+
+Provision real-time backends directly from the SDK:
+
+```typescript
+import { ConvexManager } from 'tekimax-ts'
+
+const convex = new ConvexManager({
+  accessToken: process.env.CONVEX_ACCESS_TOKEN,
+  teamId: process.env.CONVEX_TEAM_ID,  // optional — auto-resolved from token
+})
+
+// Provision a new project
+const project = await convex.createProject('my-ai-app')
+
+// Set env vars, generate deploy key, push schema
+await convex.setEnvVars(project.deploymentName, [
+  { name: 'OPENAI_API_KEY', value: process.env.OPENAI_API_KEY! },
+])
+const key = await convex.createDeployKey(project.deploymentName)
+convex.deploy(key, { projectDir: './my-convex-app' })
+```
 
 
 ## 💻 Installation

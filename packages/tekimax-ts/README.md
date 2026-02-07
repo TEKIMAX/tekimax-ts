@@ -21,6 +21,35 @@ npm install tekimax-ts
 - **Type Safety**: End-to-end TypeScript support. Zod schemas for runtime validation.
 - **Zero Latency**: Lightweight adapter pattern with zero runtime overhead.
 - **Zero CVEs**: Hardened supply chain using Chainguard images.
+- **Redis Adapter** _(optional)_: Response caching, rate limiting, token budgets, and session storage with any Redis client.
+- **Convex Integration**: Provision and manage [Convex](https://convex.dev) projects, push schemas, set env vars, and deploy — all from code.
+
+### 🔴 Optional Redis Adapter
+
+```typescript
+import { ResponseCache, RateLimiter, TokenBudget, SessionStore } from 'tekimax-ts'
+import Redis from 'ioredis'
+
+const redis = new Redis(process.env.REDIS_URL)
+const cache   = new ResponseCache(redis, { ttl: 3600 })       // Cache responses
+const limiter = new RateLimiter(redis, { maxRequests: 60 })    // Rate limit
+const budget  = new TokenBudget(redis, { maxTokens: 100_000 }) // Token budget
+const sessions = new SessionStore(redis, { ttl: 1800 })        // Sessions
+```
+
+### 🟠 Convex Integration
+
+```typescript
+import { ConvexManager } from 'tekimax-ts'
+
+const convex = new ConvexManager()  // reads CONVEX_ACCESS_TOKEN from env
+const project = await convex.createProject('my-ai-app')
+await convex.setEnvVars(project.deploymentName, [
+  { name: 'OPENAI_API_KEY', value: process.env.OPENAI_API_KEY! },
+])
+const key = await convex.createDeployKey(project.deploymentName)
+convex.deploy(key, { projectDir: './my-convex-app' })
+```
 
 ## 💻 Usage
 
