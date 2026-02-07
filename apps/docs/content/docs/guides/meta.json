@@ -9,6 +9,7 @@
         "middleware",
         "embeddings",
         "fallback",
-        "convex"
+        "convex",
+        "redis"
     ]
 }

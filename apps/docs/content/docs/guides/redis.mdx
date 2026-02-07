@@ -1,0 +1,253 @@
+---
+title: Redis Integration
+description: Optional Redis adapter for caching, rate limiting, token budgets, and session storage
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+## Overview
+
+The Tekimax SDK includes an **optional Redis adapter** that helps you reduce costs, prevent rate limit errors, enforce token budgets, and manage conversation sessions — all without adding Redis as a core dependency.
+
+<Callout type="info">
+  Works with any Redis-compatible client: **ioredis**, **@upstash/redis**, **node-redis**, etc.
+</Callout>
+
+## Installation
+
+The SDK defines a minimal `RedisClient` interface — bring your own Redis client:
+
+```bash
+npm install ioredis          # or @upstash/redis, redis, etc.
+```
+
+```ts
+import Redis from 'ioredis'
+import {
+  ResponseCache,
+  RateLimiter,
+  TokenBudget,
+  SessionStore,
+} from 'tekimax-ts'
+
+const redis = new Redis(process.env.REDIS_URL)
+```
+
+---
+
+## Response Caching
+
+Cache identical `chat()` calls to avoid paying for repeated API requests. The cache uses a SHA-256 hash of the model name + messages as the key.
+
+**Cost savings: 50–80% on repeated queries.**
+
+```ts
+const cache = new ResponseCache(redis, { ttl: 3600 })
+
+// Check cache first
+const cached = await cache.get('gpt-4o', messages)
+if (cached) {
+  console.log('Cache hit — $0 cost')
+  return cached
+}
+
+// Miss → call provider
+const result = await ai.chat('gpt-4o', messages)
+
+// Store for next time
+await cache.set('gpt-4o', messages, result)
+```
+
+### Custom Cache Keys
+
+```ts
+const cache = new ResponseCache(redis, {
+  ttl: 7200,
+  prefix: 'myapp:ai:',
+  keyFn: (model, messages) => {
+    // Cache by last user message only
+    const last = messages.filter(m => m.role === 'user').pop()
+    return `${model}:${last?.content?.slice(0, 100)}`
+  },
+})
+```
+
+---
+
+## Rate Limiting
+
+Track per-provider request counts with sliding windows. Check limits **before** making API calls to prevent 429 errors and automatic provider bans.
+
+```ts
+const limiter = new RateLimiter(redis, {
+  maxRequests: 60,      // 60 requests
+  windowSeconds: 60,    // per minute
+})
+
+// Check before calling
+const { allowed, remaining } = await limiter.check('openai')
+if (!allowed) {
+  console.log('Rate limit hit — waiting or switching providers')
+  // Use FallbackProvider to switch to another provider
+}
+
+// Record the request
+const status = await limiter.record('openai')
+console.log(`Remaining: ${status.remaining}/${60}`)
+```
+
+### Per-Model Rate Limits
+
+```ts
+// Track limits per model, not just per provider
+const modelLimiter = new RateLimiter(redis, {
+  maxRequests: 10,
+  windowSeconds: 60,
+  prefix: 'tekimax:model-limit:',
+})
+
+await modelLimiter.check('gpt-4o')    // separate limit
+await modelLimiter.check('gpt-4o-mini') // separate limit
+```
+
+---
+
+## Token Budget Tracking
+
+Track daily or monthly token usage per API key. **Prevent surprise bills** by enforcing hard limits that block requests when budgets are exceeded.
+
+```ts
+const budget = new TokenBudget(redis, {
+  maxTokens: 100_000,         // 100K tokens
+  periodSeconds: 86400,       // per day (24h)
+})
+
+// Check budget before call
+const { allowed, used, remaining } = await budget.check('openai-prod')
+if (!allowed) {
+  throw new Error(`Daily token budget exhausted (${used.toLocaleString()} used)`)
+}
+
+// After a successful call, record token usage
+const result = await ai.chat('gpt-4o', messages)
+await budget.record('openai-prod', result.usage.totalTokens)
+```
+
+### Multi-Tier Budgets
+
+```ts
+// Per-user daily limit
+const userBudget = new TokenBudget(redis, {
+  maxTokens: 10_000,
+  periodSeconds: 86400,
+  prefix: 'tekimax:user-budget:',
+})
+
+// Organization monthly limit
+const orgBudget = new TokenBudget(redis, {
+  maxTokens: 1_000_000,
+  periodSeconds: 2_592_000,  // 30 days
+  prefix: 'tekimax:org-budget:',
+})
+
+// Check both before making a call
+const user = await userBudget.check(`user:${userId}`)
+const org  = await orgBudget.check(`org:${orgId}`)
+
+if (!user.allowed) throw new Error('Personal daily limit reached')
+if (!org.allowed)  throw new Error('Organization monthly limit reached')
+```
+
+---
+
+## Session Storage
+
+Lightweight conversation state for **serverless and edge deployments**. Store and retrieve message history with automatic TTL expiry — faster than a full database for ephemeral state.
+
+```ts
+const sessions = new SessionStore(redis, { ttl: 1800 }) // 30 min
+
+// Save conversation after each turn
+await sessions.save('user-123', {
+  messages: [
+    { role: 'user', content: 'Hello' },
+    { role: 'assistant', content: 'Hi! How can I help?' },
+  ],
+  metadata: {
+    model: 'gpt-4o',
+    startedAt: Date.now(),
+    provider: 'openai',
+  },
+})
+
+// Restore on next request (e.g., in a serverless function)
+const session = await sessions.load('user-123')
+if (session) {
+  // Continue the conversation
+  session.messages.push({ role: 'user', content: 'Tell me a joke' })
+  const result = await ai.chat('gpt-4o', session.messages)
+  session.messages.push({ role: 'assistant', content: result.text })
+  await sessions.save('user-123', session)
+}
+
+// Extend session TTL without modifying data
+await sessions.touch('user-123')
+
+// End conversation
+await sessions.destroy('user-123')
+```
+
+---
+
+## Combining All Utilities
+
+Here's a complete example that uses all four Redis utilities together:
+
+```ts
+import Redis from 'ioredis'
+import {
+  Tekimax,
+  ResponseCache,
+  RateLimiter,
+  TokenBudget,
+  SessionStore,
+} from 'tekimax-ts'
+
+const redis = new Redis(process.env.REDIS_URL)
+const ai    = new Tekimax({ provider: 'openai', apiKey: process.env.OPENAI_API_KEY })
+
+const cache   = new ResponseCache(redis, { ttl: 3600 })
+const limiter = new RateLimiter(redis, { maxRequests: 60, windowSeconds: 60 })
+const budget  = new TokenBudget(redis, { maxTokens: 100_000, periodSeconds: 86400 })
+const sessions = new SessionStore(redis, { ttl: 1800 })
+
+async function chat(userId: string, message: string) {
+  // 1. Load session
+  const session = await sessions.load(userId) ?? { messages: [] }
+  session.messages.push({ role: 'user', content: message })
+
+  // 2. Check cache
+  const cached = await cache.get('gpt-4o', session.messages)
+  if (cached) return cached
+
+  // 3. Check rate limit
+  const { allowed: rateOk } = await limiter.check('openai')
+  if (!rateOk) throw new Error('Rate limit — try again shortly')
+
+  // 4. Check token budget
+  const { allowed: budgetOk } = await budget.check(userId)
+  if (!budgetOk) throw new Error('Daily token budget exceeded')
+
+  // 5. Make the call
+  const result = await ai.text.chat('gpt-4o', session.messages)
+  await limiter.record('openai')
+  await budget.record(userId, result.usage?.totalTokens ?? 0)
+
+  // 6. Cache + save session
+  await cache.set('gpt-4o', session.messages, result)
+  session.messages.push({ role: 'assistant', content: result.text })
+  await sessions.save(userId, session)
+
+  return result
+}
+```
