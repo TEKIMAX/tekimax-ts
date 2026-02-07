@@ -173,29 +173,6 @@ const budget = new TokenBudget(redis, { maxTokens: 100_000, periodSeconds: 86400
 const sessions = new SessionStore(redis, { ttl: 1800 })
 ```
 
-## 🟠 Convex Integration
-
-Provision real-time backends directly from the SDK:
-
-```typescript
-import { ConvexManager } from 'tekimax-ts'
-
-const convex = new ConvexManager({
-  accessToken: process.env.CONVEX_ACCESS_TOKEN,
-  teamId: process.env.CONVEX_TEAM_ID,  // optional — auto-resolved from token
-})
-
-// Provision a new project
-const project = await convex.createProject('my-ai-app')
-
-// Set env vars, generate deploy key, push schema
-await convex.setEnvVars(project.deploymentName, [
-  { name: 'OPENAI_API_KEY', value: process.env.OPENAI_API_KEY! },
-])
-const key = await convex.createDeployKey(project.deploymentName)
-convex.deploy(key, { projectDir: './my-convex-app' })
-```
-
 ## 🗺️ Roadmap
 
 | Feature | Description | Status |
