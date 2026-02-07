@@ -6,10 +6,10 @@ import type { ReactNode } from 'react';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'TEKIMAX Documentation | Universal AI Adapter Layer',
+  title: 'TEKIMAX Documentation | Universal AI Standard',
   description: 'Official documentation for TEKIMAX TS, CLI, and Protocol. Build sovereign, co-adaptive AI systems with local-first tooling.',
   openGraph: {
-    title: 'TEKIMAX Documentation | Universal AI Adapter Layer',
+    title: 'TEKIMAX Documentation | Universal AI Standard',
     description: 'Official documentation for TEKIMAX TS, CLI, and Protocol. Build sovereign, co-adaptive AI systems with local-first tooling.',
     url: 'https://docs.tekimax.com',
     siteName: 'TEKIMAX Documentation',
@@ -25,7 +25,7 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'TEKIMAX Documentation | Universal AI Adapter Layer',
+    title: 'TEKIMAX Documentation | Universal AI Standard',
     description: 'Official documentation for TEKIMAX TS, CLI, and Protocol.',
     images: ['https://tekimax.com/images/tekimax-social-card.png'],
   },

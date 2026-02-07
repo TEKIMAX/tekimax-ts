@@ -1,7 +1,7 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/TEKIMAX/tekimax-ts/main/apps/docs/public/tekimax-logo.png" alt="Tekimax SDK Logo" width="200" />
   <h1>Tekimax TS</h1>
-  <p><strong>Universal AI Adapter Layer.</strong></p>
+  <p><strong>The Universal Standard.</strong></p>
   <p>A type-safe, framework-agnostic AI SDK for building AI-powered apps.</p>
 
 [![npm version](https://img.shields.io/npm/v/tekimax-ts.svg)](https://www.npmjs.com/package/tekimax-ts)

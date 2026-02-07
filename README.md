@@ -1,7 +1,7 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/TEKIMAX/tekimax-ts/main/apps/docs/public/tekimax-logo.png" alt="Tekimax SDK Logo" width="120" />
   <h1>Tekimax SDK</h1>
-  <p><strong>The Universal AI Adapter Layer</strong></p>
+  <p><strong>The Universal Standard</strong></p>
   
   <p>
     <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>

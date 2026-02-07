@@ -1,6 +1,6 @@
 # Tekimax Documentation
 
-The official documentation for the **Tekimax Universal AI Adapter Layer**.
+The official documentation for the **Tekimax Universal AI Standard**.
 
 ## 📚 Overview
 
