@@ -1,0 +1,8 @@
+{
+    "name": "api-test-llm",
+    "version": "1.0.0",
+    "type": "module",
+    "dependencies": {
+        "tekimax-ts": "file:../packages/tekimax-ts"
+    }
+}

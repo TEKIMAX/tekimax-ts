@@ -18,7 +18,7 @@ npm install tekimax-ts
 ## 🌟 Features
 
 - **Universal API**: One interface for all providers. Switch from OpenAI to Ollama with a single config change.
-- **Type Safety**: End-to-end TypeScript support. Zod schemas for runtime validation.
+- **Strict Modality Type Safety**: End-to-end TypeScript support. Strong capability interfaces ensure compile-time safety (e.g., your code won't compile if you call `.images.generate()` on a provider missing the `ImageGenerationCapability`). Zod schemas for runtime validation.
 - **Zero Latency**: Lightweight adapter pattern with zero runtime overhead.
 - **Zero CVEs**: Hardened supply chain using Chainguard images.
 - **Redis Adapter** _(optional)_: Response caching, rate limiting, token budgets, and session storage with any Redis client.
@@ -52,6 +52,14 @@ const claude = new Tekimax({
 // Ollama (Local)
 const local = new Tekimax({
     provider: new OllamaProvider({ baseUrl: 'http://localhost:11434' })
+})
+
+// Custom Model Proxies (e.g. Model.dev or internal gateways)
+const proxyClient = new Tekimax({
+    provider: new OpenAIProvider({ 
+        apiKey: process.env.CUSTOM_PROXY_KEY,
+        baseURL: 'https://api.my-custom-proxy.internal/v1' 
+    })
 })
 ```
 
