@@ -10,3 +10,5 @@ scripts/
 
 # Private internal packages (not for public repo)
 packages/convex-internal/
+
+api-test-llm/

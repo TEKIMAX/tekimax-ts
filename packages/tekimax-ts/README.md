@@ -54,7 +54,7 @@ const local = new Tekimax({
     provider: new OllamaProvider({ baseUrl: 'http://localhost:11434' })
 })
 
-// Custom Model Proxies (e.g. Model.dev or internal gateways)
+// Custom Model Proxies (e.g. Internal API gateways)
 const proxyClient = new Tekimax({
     provider: new OpenAIProvider({ 
         apiKey: process.env.CUSTOM_PROXY_KEY,
