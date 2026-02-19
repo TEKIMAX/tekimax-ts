@@ -42,7 +42,16 @@ Cache identical `chat()` calls to avoid paying for repeated API requests. The ca
 **Cost savings: 50–80% on repeated queries.**
 
 ```ts
+import { Tekimax, OpenAIProvider, ResponseCache } from 'tekimax-ts'
+import Redis from 'ioredis'
+
+const redis = new Redis(process.env.REDIS_URL)
 const cache = new ResponseCache(redis, { ttl: 3600 })
+
+// Initialize
+const client = new Tekimax({ 
+  provider: new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY })
+})
 
 // Check cache first
 const cached = await cache.get('gpt-4o', messages)
@@ -52,7 +61,10 @@ if (cached) {
 }
 
 // Miss → call provider
-const result = await ai.chat('gpt-4o', messages)
+const result = await client.text.chat.completions.create({
+  model: 'gpt-4o',
+  messages
+})
 
 // Store for next time
 await cache.set('gpt-4o', messages, result)
@@ -129,8 +141,11 @@ if (!allowed) {
 }
 
 // After a successful call, record token usage
-const result = await ai.chat('gpt-4o', messages)
-await budget.record('openai-prod', result.usage.totalTokens)
+const result = await client.text.chat.completions.create({
+  model: 'gpt-4o',
+  messages
+})
+await budget.record('openai-prod', result.usage?.totalTokens || 0)
 ```
 
 ### Multi-Tier Budgets
@@ -185,8 +200,11 @@ const session = await sessions.load('user-123')
 if (session) {
   // Continue the conversation
   session.messages.push({ role: 'user', content: 'Tell me a joke' })
-  const result = await ai.chat('gpt-4o', session.messages)
-  session.messages.push({ role: 'assistant', content: result.text })
+  const response = await client.text.chat.completions.create({
+    model: 'gpt-4o',
+    messages: session.messages
+  })
+  session.messages.push(response.message)
   await sessions.save('user-123', session)
 }
 
@@ -207,6 +225,7 @@ Here's a complete example that uses all four Redis utilities together:
 import Redis from 'ioredis'
 import {
   Tekimax,
+  OpenAIProvider,
   ResponseCache,
   RateLimiter,
   TokenBudget,
@@ -214,7 +233,10 @@ import {
 } from 'tekimax-ts'
 
 const redis = new Redis(process.env.REDIS_URL)
-const ai    = new Tekimax({ provider: 'openai', apiKey: process.env.OPENAI_API_KEY })
+
+const client = new Tekimax({ 
+  provider: new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY }) 
+})
 
 const cache   = new ResponseCache(redis, { ttl: 3600 })
 const limiter = new RateLimiter(redis, { maxRequests: 60, windowSeconds: 60 })
@@ -239,13 +261,17 @@ async function chat(userId: string, message: string) {
   if (!budgetOk) throw new Error('Daily token budget exceeded')
 
   // 5. Make the call
-  const result = await ai.text.chat('gpt-4o', session.messages)
+  const result = await client.text.chat.completions.create({
+    model: 'gpt-4o',
+    messages: session.messages
+  })
+  
   await limiter.record('openai')
   await budget.record(userId, result.usage?.totalTokens ?? 0)
 
   // 6. Cache + save session
   await cache.set('gpt-4o', session.messages, result)
-  session.messages.push({ role: 'assistant', content: result.text })
+  session.messages.push(result.message)
   await sessions.save(userId, session)
 
   return result
