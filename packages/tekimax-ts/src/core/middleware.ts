@@ -63,27 +63,25 @@ export interface Middleware {
  * const client = new Tekimax({ provider })
  * ```
  */
-export function wrapProvider(
-    provider: AIProvider,
+export function wrapProvider<TProvider extends AIProvider>(
+    provider: TProvider,
     middlewares: Middleware[]
-): AIProvider {
-    return {
-        ...provider,
-        name: provider.name,
+): TProvider {
+    const wrappedChat = createWrappedChat(provider, middlewares)
+    const wrappedChatStream = createWrappedChatStream(provider, middlewares)
 
-        chat: createWrappedChat(provider, middlewares),
-        chatStream: createWrappedChatStream(provider, middlewares),
+    return new Proxy(provider, {
+        get(target, prop, receiver) {
+            if (prop === 'chat') return wrappedChat
+            if (prop === 'chatStream') return wrappedChatStream
 
-        // Multi-modal methods pass through unmodified.
-        // Middleware only applies to chat/chatStream for now.
-        generateImage: provider.generateImage?.bind(provider),
-        editImage: provider.editImage?.bind(provider),
-        analyzeImage: provider.analyzeImage?.bind(provider),
-        generateSpeech: provider.generateSpeech?.bind(provider),
-        transcribeAudio: provider.transcribeAudio?.bind(provider),
-        generateVideo: provider.generateVideo?.bind(provider),
-        analyzeVideo: provider.analyzeVideo?.bind(provider),
-    }
+            const value = Reflect.get(target, prop, receiver)
+            if (typeof value === 'function') {
+                return value.bind(target)
+            }
+            return value
+        }
+    })
 }
 
 function createWrappedChat(
@@ -157,7 +155,7 @@ function createWrappedChatStream(
                             }
                         }
 
-                        const result = await innerIterator.next()
+                        const result = await innerIterator!.next()
 
                         if (result.done) {
                             return result

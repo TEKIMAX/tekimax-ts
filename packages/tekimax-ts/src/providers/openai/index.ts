@@ -12,10 +12,16 @@ import type {
     EmbeddingOptions,
     EmbeddingResult,
     ImageEditOptions,
-    ImageResult
+    ImageResult,
+    SpeechGenerationCapability,
+    ImageGenerationCapability,
+    ImageEditCapability,
+    VisionCapability,
+    TranscriptionCapability,
+    EmbeddingCapability
 } from '../../core'
 
-export class OpenAIProvider implements AIProvider {
+export class OpenAIProvider implements AIProvider, SpeechGenerationCapability, ImageGenerationCapability, ImageEditCapability, VisionCapability, TranscriptionCapability, EmbeddingCapability {
     name = 'openai'
     private client: OpenAI
 
@@ -239,7 +245,7 @@ export class OpenAIProvider implements AIProvider {
         return {
             role: msg.role,
             content: msg.content || '',
-            toolCalls: msg.tool_calls?.map(tc => {
+            toolCalls: msg.tool_calls?.map((tc: any) => {
                 if (tc.type === 'function') {
                     return {
                         id: tc.id,
@@ -287,7 +293,7 @@ export class OpenAIProvider implements AIProvider {
         })
 
         return {
-            embeddings: response.data.map(d => d.embedding),
+            embeddings: response.data.map((d: any) => d.embedding),
             model: response.model,
             usage: response.usage ? {
                 promptTokens: response.usage.prompt_tokens,
@@ -308,7 +314,7 @@ export class OpenAIProvider implements AIProvider {
 
         return {
             created: Date.now(),
-            data: (response.data || []).map(d => ({
+            data: (response.data || []).map((d: any) => ({
                 url: d.url,
                 b64_json: d.b64_json,
                 revised_prompt: d.revised_prompt,

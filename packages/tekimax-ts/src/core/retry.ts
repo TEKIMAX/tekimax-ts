@@ -165,73 +165,67 @@ export async function withRetry<T>(
  * // All calls through this client now auto-retry on failures
  * ```
  */
-export function createRetryProvider(
-    provider: AIProvider,
+export function createRetryProvider<TProvider extends AIProvider>(
+    provider: TProvider,
     options: RetryOptions = {}
-): AIProvider {
-    return {
-        ...provider,
-        name: provider.name,
+): TProvider {
+    return new Proxy(provider, {
+        get(target, prop, receiver) {
+            const value = Reflect.get(target, prop, receiver)
 
-        chat: (chatOptions: ChatOptions): Promise<ChatResult> => {
-            return withRetry(
-                () => provider.chat(chatOptions),
-                { ...options, signal: chatOptions.signal || options.signal }
-            )
-        },
+            if (typeof value === 'function' && typeof prop === 'string') {
+                if (prop === 'chatStream') {
+                    return function (chatOptions: ChatOptions): AsyncIterable<StreamChunk> {
+                        // For streaming, we retry the initial connection.
+                        const iterable: AsyncIterable<StreamChunk> = {
+                            [Symbol.asyncIterator]() {
+                                let innerIterator: AsyncIterator<StreamChunk> | null = null
 
-        chatStream: (chatOptions: ChatOptions): AsyncIterable<StreamChunk> => {
-            // For streaming, we retry the initial connection.
-            // Once streaming starts, errors mid-stream are not retried.
-            const iterable: AsyncIterable<StreamChunk> = {
-                [Symbol.asyncIterator]() {
-                    let innerIterator: AsyncIterator<StreamChunk> | null = null
-
-                    return {
-                        async next() {
-                            if (!innerIterator) {
-                                // Retry the connection phase
-                                const stream = await withRetry(
-                                    async () => provider.chatStream(chatOptions),
-                                    { ...options, signal: chatOptions.signal || options.signal }
-                                )
-                                innerIterator = stream[Symbol.asyncIterator]()
+                                return {
+                                    async next() {
+                                        if (!innerIterator) {
+                                            const stream = await withRetry(
+                                                async () => value.call(target, chatOptions),
+                                                { ...options, signal: chatOptions.signal || options.signal }
+                                            )
+                                            innerIterator = stream[Symbol.asyncIterator]()
+                                        }
+                                        return innerIterator!.next()
+                                    },
+                                    async return() {
+                                        if (innerIterator?.return) {
+                                            return innerIterator.return()
+                                        }
+                                        return { value: undefined, done: true }
+                                    }
+                                }
                             }
-                            return innerIterator.next()
-                        },
-                        async return() {
-                            if (innerIterator?.return) {
-                                return innerIterator.return()
-                            }
-                            return { value: undefined, done: true }
                         }
+                        return iterable
+                    }
+                }
+
+                const promiseMethods = [
+                    'chat', 'generateImage', 'editImage', 'analyzeImage',
+                    'generateSpeech', 'transcribeAudio', 'generateVideo',
+                    'analyzeVideo', 'embed'
+                ]
+
+                if (promiseMethods.includes(prop)) {
+                    return function (...args: any[]) {
+                        const callOpts = args[0] || {}
+                        const sig = callOpts.signal || options.signal
+                        return withRetry(() => value.apply(target, args), { ...options, signal: sig })
                     }
                 }
             }
-            return iterable
-        },
 
-        // Pass through multi-modal methods with retry
-        generateImage: provider.generateImage
-            ? (opts) => withRetry(() => provider.generateImage!(opts), options)
-            : undefined,
-        editImage: provider.editImage
-            ? (opts) => withRetry(() => provider.editImage!(opts), options)
-            : undefined,
-        analyzeImage: provider.analyzeImage
-            ? (opts) => withRetry(() => provider.analyzeImage!(opts), options)
-            : undefined,
-        generateSpeech: provider.generateSpeech
-            ? (opts) => withRetry(() => provider.generateSpeech!(opts), options)
-            : undefined,
-        transcribeAudio: provider.transcribeAudio
-            ? (opts) => withRetry(() => provider.transcribeAudio!(opts), options)
-            : undefined,
-        generateVideo: provider.generateVideo
-            ? (opts) => withRetry(() => provider.generateVideo!(opts), options)
-            : undefined,
-        analyzeVideo: provider.analyzeVideo
-            ? (opts) => withRetry(() => provider.analyzeVideo!(opts), options)
-            : undefined,
-    }
+            // Bind other methods (like internal class helpers) to the target to preserve `this` context
+            if (typeof value === 'function') {
+                return value.bind(target)
+            }
+
+            return value
+        }
+    })
 }

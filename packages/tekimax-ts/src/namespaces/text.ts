@@ -1,8 +1,8 @@
-import { AIProvider } from '../core/adapter'
+import { AIProvider, EmbeddingCapability } from '../core/adapter'
 import { ChatOptions, ChatResult, StreamChunk, EmbeddingOptions, EmbeddingResult } from '../core/types'
 
-export class TextNamespace {
-    constructor(private provider: AIProvider) { }
+export class TextNamespace<TProvider extends AIProvider> {
+    constructor(private provider: TProvider) { }
 
     /**
      * Generate text from a prompt (Chat Completion).
@@ -21,13 +21,15 @@ export class TextNamespace {
     }
 
     /**
-     * Generate embeddings for text input(s).
+     * Generate embeddings for text input(s). Only available if the provider supports embeddings.
      */
-    async embed(options: EmbeddingOptions): Promise<EmbeddingResult> {
-        if (!this.provider.embed) {
+    async embed(
+        options: TProvider extends EmbeddingCapability ? EmbeddingOptions : never
+    ): Promise<TProvider extends EmbeddingCapability ? EmbeddingResult : never> {
+        if (!('embed' in this.provider)) {
             throw new Error(`Provider '${this.provider.name}' does not support embeddings`)
         }
-        return this.provider.embed(options)
+        return (this.provider as unknown as EmbeddingCapability).embed(options as any) as any
     }
 
     // Alias for 'chat' to match OpenAI conventions if needed
@@ -40,4 +42,3 @@ export class TextNamespace {
         }
     }
 }
-

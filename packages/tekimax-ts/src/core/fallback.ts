@@ -88,43 +88,43 @@ export class FallbackProvider implements AIProvider {
 
     // --- Multi-modal: delegate to first provider that supports the capability ---
 
-    get generateImage() {
-        const provider = this.providers.find(p => p.generateImage)
+    get generateImage(): any {
+        const provider = (this.providers as any[]).find(p => typeof p.generateImage === 'function')
         return provider?.generateImage?.bind(provider)
     }
 
-    get editImage() {
-        const provider = this.providers.find(p => p.editImage)
+    get editImage(): any {
+        const provider = (this.providers as any[]).find(p => typeof p.editImage === 'function')
         return provider?.editImage?.bind(provider)
     }
 
-    get analyzeImage() {
-        const provider = this.providers.find(p => p.analyzeImage)
+    get analyzeImage(): any {
+        const provider = (this.providers as any[]).find(p => typeof p.analyzeImage === 'function')
         return provider?.analyzeImage?.bind(provider)
     }
 
-    get generateSpeech() {
-        const provider = this.providers.find(p => p.generateSpeech)
+    get generateSpeech(): any {
+        const provider = (this.providers as any[]).find(p => typeof p.generateSpeech === 'function')
         return provider?.generateSpeech?.bind(provider)
     }
 
-    get transcribeAudio() {
-        const provider = this.providers.find(p => p.transcribeAudio)
+    get transcribeAudio(): any {
+        const provider = (this.providers as any[]).find(p => typeof p.transcribeAudio === 'function')
         return provider?.transcribeAudio?.bind(provider)
     }
 
-    get generateVideo() {
-        const provider = this.providers.find(p => p.generateVideo)
+    get generateVideo(): any {
+        const provider = (this.providers as any[]).find(p => typeof p.generateVideo === 'function')
         return provider?.generateVideo?.bind(provider)
     }
 
-    get analyzeVideo() {
-        const provider = this.providers.find(p => p.analyzeVideo)
+    get analyzeVideo(): any {
+        const provider = (this.providers as any[]).find(p => typeof p.analyzeVideo === 'function')
         return provider?.analyzeVideo?.bind(provider)
     }
 
-    get embed() {
-        const provider = this.providers.find(p => p.embed)
+    get embed(): any {
+        const provider = (this.providers as any[]).find(p => typeof p.embed === 'function')
         return provider?.embed?.bind(provider)
     }
 

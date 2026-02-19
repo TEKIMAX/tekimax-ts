@@ -7,10 +7,11 @@ import type {
     StreamChunk,
     ToolDefinition,
     ImageAnalysisOptions,
-    ImageAnalysisResult
+    ImageAnalysisResult,
+    VisionCapability
 } from '../../core'
 
-export class AnthropicProvider implements AIProvider {
+export class AnthropicProvider implements AIProvider, VisionCapability {
     name = 'anthropic'
     private client: Anthropic
 

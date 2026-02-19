@@ -1,26 +1,30 @@
-import { AIProvider } from '../core/adapter'
+import { AIProvider, VideoGenerationCapability, VideoAnalysisCapability } from '../core/adapter'
 import { VideoGenerationOptions, VideoResult, VideoAnalysisOptions, VideoAnalysisResult } from '../core/types'
 
-export class VideosNamespace {
-    constructor(private provider: AIProvider) { }
+export class VideosNamespace<TProvider extends AIProvider> {
+    constructor(private provider: TProvider) { }
 
     /**
-     * Generate a video from a prompt.
+     * Generate a video from a prompt. Only available if the provider supports video generation.
      */
-    async generate(options: VideoGenerationOptions): Promise<VideoResult> {
-        if (!this.provider.generateVideo) {
+    async generate(
+        options: TProvider extends VideoGenerationCapability ? VideoGenerationOptions : never
+    ): Promise<TProvider extends VideoGenerationCapability ? VideoResult : never> {
+        if (!('generateVideo' in this.provider)) {
             throw new Error(`Provider '${this.provider.name}' does not support video generation`)
         }
-        return this.provider.generateVideo(options)
+        return (this.provider as unknown as VideoGenerationCapability).generateVideo(options as any) as any
     }
 
     /**
-     * Analyze a video (Video-to-Text).
+     * Analyze a video (Video-to-Text). Only available if the provider supports video analysis.
      */
-    async analyze(options: VideoAnalysisOptions): Promise<VideoAnalysisResult> {
-        if (!this.provider.analyzeVideo) {
+    async analyze(
+        options: TProvider extends VideoAnalysisCapability ? VideoAnalysisOptions : never
+    ): Promise<TProvider extends VideoAnalysisCapability ? VideoAnalysisResult : never> {
+        if (!('analyzeVideo' in this.provider)) {
             throw new Error(`Provider '${this.provider.name}' does not support video analysis`)
         }
-        return this.provider.analyzeVideo(options)
+        return (this.provider as unknown as VideoAnalysisCapability).analyzeVideo(options as any) as any
     }
 }

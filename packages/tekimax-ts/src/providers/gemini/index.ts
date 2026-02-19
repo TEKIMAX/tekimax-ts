@@ -9,10 +9,13 @@ import type {
     ImageAnalysisOptions,
     ImageAnalysisResult,
     EmbeddingOptions,
-    EmbeddingResult
+    EmbeddingResult,
+    VisionCapability,
+    VideoAnalysisCapability,
+    EmbeddingCapability
 } from '../../core'
 
-export class GeminiProvider implements AIProvider {
+export class GeminiProvider implements AIProvider, VisionCapability, VideoAnalysisCapability, EmbeddingCapability {
     name = 'gemini'
     private client: GoogleGenerativeAI
 

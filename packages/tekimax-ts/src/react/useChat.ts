@@ -3,9 +3,9 @@ import type { AIProvider } from '../core/adapter'
 import type { Message, Tool, ToolDefinition } from '../core/types'
 import { Tekimax } from '../tekimax'
 
-export interface UseChatOptions {
-    adapter?: AIProvider
-    client?: Tekimax
+export interface UseChatOptions<TProvider extends AIProvider = AIProvider> {
+    adapter?: TProvider
+    client?: Tekimax<TProvider>
     model: string
     initialMessages?: Array<Message>
     tools?: Record<string, Tool>
@@ -25,7 +25,7 @@ export interface UseChatHelpers {
     isLoading: boolean
 }
 
-export function useChat({
+export function useChat<TProvider extends AIProvider = AIProvider>({
     adapter,
     client,
     model,
@@ -34,7 +34,7 @@ export function useChat({
     onFinish,
     onError,
     think,
-}: UseChatOptions): UseChatHelpers {
+}: UseChatOptions<TProvider>): UseChatHelpers {
     const [messages, setMessages] = useState<Array<Message>>(initialMessages)
     const [input, setInput] = useState('')
     const [isLoading, setIsLoading] = useState(false)

@@ -4,16 +4,6 @@ dist
 .turbo
 .next
 
-# Non-Monorepo Projects (User Request)
-tekimax-go
-tekimax-rust
-tekimax-cli
-tanstack-ai
-cli-backkup
-celeste-sdk
-tekimax
-tekimax-website
-
 *.tgz
 
 scripts/
