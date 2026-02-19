@@ -13,19 +13,19 @@ app.post('/api/chat', async (req, res) => {
     try {
         const { messages, model, providerConfig } = req.body;
 
-        // Securely instantiate the Tekimax SDK *only* on the backend
+        // Priority: UI providerConfig > .env > defaults
+        const resolvedKey = providerConfig?.apiKey || process.env.MODEL_PROXY_KEY || 'sk-default';
+        const resolvedURL = providerConfig?.baseURL || process.env.MODEL_PROXY_URL || 'http://localhost:11434/v1';
+
+        console.log(`[Chat] model=${model} baseURL=${resolvedURL}`);
+
         const client = new Tekimax({
             provider: new OpenAIProvider({
-                apiKey: (providerConfig?.apiKey && providerConfig.apiKey !== 'sk-default')
-                    ? providerConfig.apiKey
-                    : process.env.MODEL_PROXY_KEY || 'sk-default',
-                baseURL: (providerConfig?.baseURL && providerConfig.baseURL !== 'http://localhost:8080/v1')
-                    ? providerConfig.baseURL
-                    : process.env.MODEL_PROXY_URL || 'https://api.model.dev/v1',
+                apiKey: resolvedKey,
+                baseURL: resolvedURL,
             })
         });
 
-        // We can securely invoke the SDK here without dangerouslyAllowBrowser
         const response = await client.text.chat.completions.create({
             model: model || 'gpt-4o',
             messages: messages,
@@ -33,8 +33,8 @@ app.post('/api/chat', async (req, res) => {
 
         res.json({ content: response.message.content });
     } catch (error: any) {
-        console.error('Proxy Error executing SDK Chat completion:', error);
-        res.status(500).json({ error: error.message || "Unknown proxy connection error encountered." });
+        console.error('Proxy Error:', error.message);
+        res.status(500).json({ error: error.message || "Unknown proxy error." });
     }
 });
 
