@@ -31,6 +31,31 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
+app.get('/api/models', async (req, res) => {
+    try {
+        const apiKey = (req.headers['x-api-key'] as string) || 'sk-default';
+        const baseUrl = (req.headers['x-base-url'] as string) || 'http://localhost:8080/v1';
+
+        const response = await fetch(`${baseUrl}/models`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Upstream error: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        res.json(data);
+    } catch (error: any) {
+        console.error('Models API Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 const PORT = 3001;
 app.listen(PORT, () => {
     console.log(`Backend securely running on http://localhost:${PORT}`);

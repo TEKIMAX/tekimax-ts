@@ -24,7 +24,14 @@ export function ModelSelector({ selectedModel, onSelect }: Props) {
         setError("")
         try {
             const baseUrl = localStorage.getItem("tekimax_custom_base_url") || "http://localhost:8080/v1"
-            const res = await fetch(`${baseUrl}/models`)
+            const apiKey = localStorage.getItem("tekimax_custom_api_key") || ""
+
+            const res = await fetch('/api/models', {
+                headers: {
+                    'x-base-url': baseUrl,
+                    'x-api-key': apiKey
+                }
+            })
             if (!res.ok) throw new Error("Failed to connect to gateway")
 
             const data = await res.json()
