@@ -1,5 +1,3 @@
-import { execSync } from 'child_process'
-
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface ConvexManagerOptions {
@@ -193,21 +191,16 @@ export class ConvexManager {
 
     /**
      * Push Convex functions and schema to a deployment.
-     * Shells out to `npx convex deploy` with the given deploy key.
+     * Use the Convex CLI directly to run this command.
      */
     deploy(deployKey: string, options: ConvexDeployOptions = {}): void {
         const cwd = options.projectDir || process.cwd()
         const flags = options.flags?.join(' ') || ''
-        const cmd = `npx convex deploy --cmd-url-env-var-name CONVEX_URL ${flags}`.trim()
+        const cmd = `CONVEX_DEPLOY_KEY=${deployKey} npx convex deploy --cmd-url-env-var-name CONVEX_URL ${flags}`.trim()
 
-        execSync(cmd, {
-            cwd,
-            stdio: 'inherit',
-            env: {
-                ...process.env,
-                CONVEX_DEPLOY_KEY: deployKey,
-            },
-        })
+        throw new Error(
+            `Deploys must be executed via the CLI. Run the following command in your terminal from ${cwd}:\n\n  ${cmd}`
+        )
     }
 
     // ─── Discovery ──────────────────────────────────────────────────────
@@ -233,10 +226,7 @@ export class ConvexManager {
 
     /**
      * Generate an OpenAPI specification from a Convex deployment.
-     *
-     * Uses `npx convex-helpers open-api-spec` to introspect the deployment
-     * and produce a `convex-spec.yaml` file. You can then use tools like
-     * openapi-generator-cli to create type-safe clients in Go, Java, etc.
+     * Use the Convex CLI directly to run this command.
      *
      * @see https://docs.convex.dev/client/open-api
      */
@@ -246,10 +236,9 @@ export class ConvexManager {
         const extraFlags = options.flags?.join(' ') || ''
         const cmd = `npx convex-helpers open-api-spec --output ${output} ${extraFlags}`.trim()
 
-        execSync(cmd, {
-            cwd,
-            stdio: 'inherit',
-        })
+        throw new Error(
+            `OpenAPI generation must be executed via the CLI. Run the following command in your terminal from ${cwd}:\n\n  ${cmd}`
+        )
     }
 
     // ─── Internal Helpers ───────────────────────────────────────────────

@@ -1,5 +1,3 @@
-import { createHash } from 'crypto'
-
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 /**
@@ -116,7 +114,14 @@ export class ResponseCache {
 
     private defaultKeyFn(model: string, messages: any[]): string {
         const payload = JSON.stringify({ model, messages })
-        return createHash('sha256').update(payload).digest('hex')
+
+        // Isomorphic DBJ2 Hash (Sync) to avoid Node crypto imports 
+        let hash = 5381
+        for (let i = 0; i < payload.length; i++) {
+            hash = ((hash << 5) + hash) + payload.charCodeAt(i)
+        }
+
+        return (hash >>> 0).toString(16)
     }
 }
 
