@@ -67,7 +67,6 @@ export default function HomePage() {
               </div>
 
               <h1 className="text-5xl lg:text-7xl font-bold tracking-tighter mb-8 leading-[0.9]">
-                UNIVERSAL<br />
                 <span className="bg-foreground text-orange-400">AI ADAPTER</span><br />
                 <span className="bg-foreground text-blue-400">LAYER.</span>
               </h1>
