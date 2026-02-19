@@ -4,6 +4,7 @@ import type { Message, Tool, ToolDefinition } from '../core/types'
 import { Tekimax } from '../tekimax'
 
 export interface UseChatOptions<TProvider extends AIProvider = AIProvider> {
+    api?: string
     adapter?: TProvider
     client?: Tekimax<TProvider>
     model: string
@@ -12,6 +13,7 @@ export interface UseChatOptions<TProvider extends AIProvider = AIProvider> {
     onFinish?: (message: Message) => void
     onError?: (error: Error) => void
     think?: boolean
+    body?: any // Custom body attachments
 }
 
 export interface UseChatHelpers {
@@ -26,11 +28,13 @@ export interface UseChatHelpers {
 }
 
 export function useChat<TProvider extends AIProvider = AIProvider>({
+    api,
     adapter,
     client,
     model,
     initialMessages = [],
     tools,
+    body,
     onFinish,
     onError,
     think,
@@ -84,12 +88,25 @@ export function useChat<TProvider extends AIProvider = AIProvider>({
                     think
                 }
 
-                if (client) {
+                if (api) {
+                    // Shim standard HTTP Fetch response into AsyncIterable Stream to satisfy core logic
+                    stream = (async function* () {
+                        const res = await fetch(api, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ messages: currentMessages, model, ...body }),
+                            signal: abortController.signal
+                        })
+                        if (!res.ok) throw new Error(await res.text())
+                        const data = await res.json()
+                        yield { delta: data.content }
+                    })()
+                } else if (client) {
                     stream = client.text.generateStream(options)
                 } else if (adapter) {
                     stream = adapter.chatStream(options)
                 } else {
-                    throw new Error("useChat: No client or adapter provided")
+                    throw new Error("useChat: No api router, client, or adapter provided")
                 }
 
                 let fullContent = ''

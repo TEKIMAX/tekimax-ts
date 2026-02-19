@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useChat } from 'tekimax-ts/react';
-import { Tekimax, OpenAIProvider } from 'tekimax-ts';
 
 // Components
 import { ModelSelector } from './components/ModelSelector';
@@ -15,14 +14,6 @@ export default function App() {
     baseURL: localStorage.getItem("tekimax_custom_base_url") || "http://localhost:8080/v1"
   });
 
-  // Initialize the Tekimax client
-  const client = new Tekimax({
-    provider: new OpenAIProvider({
-      apiKey: providerConfig.apiKey,
-      baseURL: providerConfig.baseURL,
-    })
-  });
-
   // Re-initialize config when Settings Modal dispatches an update
   useEffect(() => {
     const handleUpdate = () => {
@@ -35,10 +26,11 @@ export default function App() {
     return () => window.removeEventListener('tekimax_settings_updated', handleUpdate);
   }, []);
 
-  // Initialize the Tekimax Chat Hook
+  // Initialize the Tekimax Chat Hook pointing to our Secure Backend Node API
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    client,
+    api: '/api/chat',
     model: selectedModel,
+    body: { providerConfig },
   });
 
   return (
