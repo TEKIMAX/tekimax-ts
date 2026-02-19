@@ -23,7 +23,7 @@ export function ModelSelector({ selectedModel, onSelect }: Props) {
         setLoading(true)
         setError("")
         try {
-            const baseUrl = localStorage.getItem("tekimax_custom_base_url") || "http://localhost:8080/v1"
+            const baseUrl = localStorage.getItem("tekimax_custom_base_url") || "https://api.model.dev/v1"
             const apiKey = localStorage.getItem("tekimax_custom_api_key") || ""
 
             const res = await fetch('/api/models', {

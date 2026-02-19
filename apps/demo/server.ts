@@ -14,7 +14,7 @@ app.post('/api/chat', async (req, res) => {
         const client = new Tekimax({
             provider: new OpenAIProvider({
                 apiKey: providerConfig?.apiKey || 'sk-default',
-                baseURL: providerConfig?.baseURL || 'http://localhost:8080/v1',
+                baseURL: providerConfig?.baseURL || 'https://api.model.dev/v1',
             })
         });
 
@@ -34,7 +34,7 @@ app.post('/api/chat', async (req, res) => {
 app.get('/api/models', async (req, res) => {
     try {
         const apiKey = (req.headers['x-api-key'] as string) || 'sk-default';
-        const baseUrl = (req.headers['x-base-url'] as string) || 'http://localhost:8080/v1';
+        const baseUrl = (req.headers['x-base-url'] as string) || 'https://api.model.dev/v1';
 
         const response = await fetch(`${baseUrl}/models`, {
             method: 'GET',
