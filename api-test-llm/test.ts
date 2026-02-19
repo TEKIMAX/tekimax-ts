@@ -11,10 +11,10 @@ async function fetchModels() {
 async function run() {
     const models = await fetchModels();
     console.log("\n--- Available Models ---");
-    models.forEach(m => console.log(`- ${m.id} (Vision: ${m.meta.vision}, Tools: ${m.meta.tools})`));
+    models.forEach((m: any) => console.log(`- ${m.id} (Vision: ${m.meta.vision}, Tools: ${m.meta.tools})`));
 
     // 2. The user selects a model from the UI (e.g. they select the first one with Vision support)
-    const selectedModel = models.find(m => m.meta.vision);
+    const selectedModel = models.find((m: any) => m.meta.vision);
     if (!selectedModel) throw new Error("No vision model found");
 
     console.log(`\nUser selected: ${selectedModel.id}`);

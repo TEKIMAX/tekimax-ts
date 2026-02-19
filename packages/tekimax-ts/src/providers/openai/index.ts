@@ -25,11 +25,10 @@ export class OpenAIProvider implements AIProvider, SpeechGenerationCapability, I
     name = 'openai'
     private client: OpenAI
 
-    constructor(options: { apiKey: string; dangerouslyAllowBrowser?: boolean; baseURL?: string }) {
+    constructor(options: { apiKey: string; baseURL?: string }) {
         this.client = new OpenAI({
             apiKey: options.apiKey,
-            baseURL: options.baseURL,
-            dangerouslyAllowBrowser: options.dangerouslyAllowBrowser
+            baseURL: options.baseURL
         })
     }
 
