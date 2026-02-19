@@ -16,7 +16,8 @@ import type {
     TranscriptionOptions,
     TranscriptionResult,
     EmbeddingOptions,
-    EmbeddingResult
+    EmbeddingResult,
+    ModelDefinition
 } from './types'
 
 export interface AIProvider {
@@ -31,6 +32,13 @@ export interface AIProvider {
      * Stream a chat completion.
      */
     chatStream: (options: ChatOptions) => AsyncIterable<StreamChunk>
+
+    /**
+     * Optional: Fetch the catalog of available models from this provider.
+     * Returns OpenResponses-compliant ModelDefinition objects fused with
+     * models.dev metadata (modalities, limits, reasoning flags).
+     */
+    getModels?: () => Promise<ModelDefinition[]>
 }
 
 // --- Multi-Modal Capability Interfaces ---

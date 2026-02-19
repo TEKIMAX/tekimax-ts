@@ -232,3 +232,80 @@ export interface EmbeddingResult {
     }
 }
 
+// --- Models.dev + OpenResponses Fusion Types ---
+
+export interface ModelLimit {
+    /** Maximum context window size in tokens */
+    context: number
+    /** Maximum output tokens */
+    output: number
+}
+
+export interface ModelModalities {
+    input: Array<'text' | 'image' | 'audio' | 'video' | 'file'>
+    output: Array<'text' | 'image' | 'audio' | 'video'>
+}
+
+export interface ModelCost {
+    /** Cost per 1M input tokens (USD) */
+    input?: number
+    /** Cost per 1M output tokens (USD) */
+    output?: number
+    /** Cost per 1M cached input tokens (USD) */
+    cache_read?: number
+}
+
+/**
+ * OpenResponses-compliant reasoning configuration.
+ * Maps from `models.dev` boolean `reasoning` flag into
+ * the official `ReasoningEffortEnum` from openresponses/openresponses.
+ */
+export interface OpenResponsesReasoningConfig {
+    effort?: 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh'
+    summary?: 'none' | 'terse' | 'verbose' | 'detailed'
+}
+
+/**
+ * A standardized model definition that fuses the `models.dev` catalog
+ * with the `openresponses.org` specification.
+ *
+ * This type is returned by providers that support catalog introspection
+ * (e.g., fetching from `https://models.dev/api.json`).
+ */
+export interface ModelDefinition {
+    /** Unique model identifier (e.g. "gpt-4o", "glm-4.6") */
+    id: string
+    /** Human-readable display name */
+    name: string
+    /** Model architecture family (e.g. "gpt", "glm", "deepseek") */
+    family?: string
+    /** Provider name (e.g. "OpenAI", "Ollama Cloud") */
+    provider?: string
+
+    // --- OpenResponses Mapped Capabilities ---
+
+    /** Whether the model supports file/image/audio attachments in input */
+    attachment: boolean
+    /** Whether the model supports function/tool calling */
+    tool_call: boolean
+    /** Whether the model supports structured JSON output */
+    structured_output?: boolean
+
+    /**
+     * Reasoning capability.
+     * - `false`: No reasoning support.
+     * - `true`: Reasoning supported (default effort = "medium").
+     * - `OpenResponsesReasoningConfig`: Fine-grained reasoning control
+     *   per the official openresponses.org ReasoningEffortEnum.
+     */
+    reasoning: boolean | OpenResponsesReasoningConfig
+
+    // --- Metadata ---
+
+    /** Supported input/output modalities */
+    modalities: ModelModalities
+    /** Token limits */
+    limit: ModelLimit
+    /** Pricing per 1M tokens */
+    cost?: ModelCost
+}

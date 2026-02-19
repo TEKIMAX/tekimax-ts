@@ -1,11 +1,17 @@
 import { useState, useEffect } from "react"
-import { ChevronDown, Check, Zap, Eye, Wrench, Search, Key } from "lucide-react"
+import { ChevronDown, Check, Zap, Eye, Wrench, Search, Key, Brain, Mic } from "lucide-react"
 
 export type ModelFeature = {
     id: string
+    name: string
     provider: string
+    family?: string
     vision: boolean
     tools: boolean
+    reasoning: boolean
+    audio: boolean
+    contextLimit?: number
+    outputLimit?: number
 }
 
 interface Props {
@@ -27,23 +33,21 @@ export function ModelSelector({ selectedModel, onSelect }: Props) {
         setLoading(true)
         setError("")
         try {
-            const baseUrl = localStorage.getItem("tekimax_custom_base_url") || "http://localhost:8080/v1"
-            const apiKey = localStorage.getItem("tekimax_custom_api_key") || ""
-
-            const res = await fetch('/api/models', {
-                headers: {
-                    'x-base-url': baseUrl,
-                    'x-api-key': apiKey
-                }
-            })
+            const res = await fetch('/api/models')
             if (!res.ok) throw new Error("Failed to connect to gateway")
 
             const data = await res.json()
             const mapped = data.data.map((m: any) => ({
                 id: m.id,
-                provider: m.owned_by || "Other",
-                vision: m.meta?.vision || false,
-                tools: m.meta?.tools || false
+                name: m.name || m.id,
+                provider: m.provider || "Other",
+                family: m.family,
+                vision: m.modalities?.input?.includes("image") || m.attachment || false,
+                tools: m.tool_call || false,
+                reasoning: typeof m.reasoning === 'object' ? true : (m.reasoning || false),
+                audio: m.modalities?.input?.includes("audio") || false,
+                contextLimit: m.limit?.context,
+                outputLimit: m.limit?.output
             }))
             setModels(mapped)
 
@@ -55,8 +59,8 @@ export function ModelSelector({ selectedModel, onSelect }: Props) {
             setError("Gateway unreachable")
             // Fallback models if disconnected
             setModels([
-                { id: "gpt-4o", provider: "openai", vision: true, tools: true },
-                { id: "claude-3.5-sonnet", provider: "anthropic", vision: true, tools: true }
+                { id: "gpt-4o", name: "GPT-4o", provider: "OpenAI", vision: true, tools: true, reasoning: false, audio: false, contextLimit: 128000, outputLimit: 16384 },
+                { id: "claude-3.5-sonnet", name: "Claude 3.5 Sonnet", provider: "Anthropic", vision: true, tools: true, reasoning: false, audio: false, contextLimit: 200000, outputLimit: 4096 }
             ])
         } finally {
             setLoading(false)
@@ -150,12 +154,12 @@ export function ModelSelector({ selectedModel, onSelect }: Props) {
                                     {expandedProvider === provider && (
                                         <div className="pl-3 pr-1 pt-1 pb-2 space-y-0.5 border-l-2 border-zinc-800 ml-3 mt-1">
 
-                                            <div className="pr-2 pb-1.5 mb-1.5 border-b border-zinc-800/50">
+                                            <div className="pr-2 pb-1.5 mb-1.5 border-b border-zinc-800/50 space-y-1.5">
                                                 <div className="relative">
                                                     <Key className="absolute left-2.5 top-1.5 w-3 h-3 text-zinc-500" />
                                                     <input
                                                         type="password"
-                                                        placeholder={`Paste API Key...`}
+                                                        placeholder={`API Key (e.g. sk-...)`}
                                                         value={apiKeyInput}
                                                         onChange={(e) => {
                                                             setApiKeyInput(e.target.value)
@@ -164,6 +168,20 @@ export function ModelSelector({ selectedModel, onSelect }: Props) {
                                                         }}
                                                         onClick={(e) => e.stopPropagation()}
                                                         className="w-full bg-zinc-950/50 border border-zinc-800 rounded py-1 pl-7 pr-2 text-xs text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 transition-colors"
+                                                    />
+                                                </div>
+                                                <div className="relative">
+                                                    <Search className="absolute left-2.5 top-1.5 w-3 h-3 text-zinc-500" />
+                                                    <input
+                                                        type="url"
+                                                        placeholder={`Base URL (e.g. https://open.bigmodel.cn/api/paas/v4)`}
+                                                        defaultValue={localStorage.getItem("tekimax_custom_base_url") || "http://localhost:8080/v1"}
+                                                        onChange={(e) => {
+                                                            localStorage.setItem("tekimax_custom_base_url", e.target.value)
+                                                            window.dispatchEvent(new Event('tekimax_settings_updated'))
+                                                        }}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="w-full bg-zinc-950/50 border border-zinc-800 rounded py-1 pl-7 pr-2 text-xs text-zinc-400 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 transition-colors font-mono"
                                                     />
                                                 </div>
                                             </div>
@@ -181,8 +199,10 @@ export function ModelSelector({ selectedModel, onSelect }: Props) {
                                                 >
                                                     <span className="font-mono truncate mr-2">{m.id}</span>
                                                     <div className="flex items-center gap-1.5 flex-shrink-0">
+                                                        {m.reasoning && <span title="Reasoning"><Brain className="w-3 h-3 text-purple-400" /></span>}
                                                         {m.vision && <span title="Vision"><Eye className="w-3 h-3 text-blue-400" /></span>}
                                                         {m.tools && <span title="Tool Calling"><Wrench className="w-3 h-3 text-orange-400" /></span>}
+                                                        {m.audio && <span title="Audio"><Mic className="w-3 h-3 text-teal-400" /></span>}
                                                         {selectedModel === m.id && <Check className="w-3.5 h-3.5 text-emerald-400 ml-1" />}
                                                     </div>
                                                 </button>

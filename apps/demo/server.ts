@@ -16,8 +16,12 @@ app.post('/api/chat', async (req, res) => {
         // Securely instantiate the Tekimax SDK *only* on the backend
         const client = new Tekimax({
             provider: new OpenAIProvider({
-                apiKey: process.env.MODEL_PROXY_KEY || providerConfig?.apiKey || 'sk-default',
-                baseURL: process.env.MODEL_PROXY_URL || providerConfig?.baseURL || 'http://localhost:8080/v1',
+                apiKey: (providerConfig?.apiKey && providerConfig.apiKey !== 'sk-default')
+                    ? providerConfig.apiKey
+                    : process.env.MODEL_PROXY_KEY || 'sk-default',
+                baseURL: (providerConfig?.baseURL && providerConfig.baseURL !== 'http://localhost:8080/v1')
+                    ? providerConfig.baseURL
+                    : process.env.MODEL_PROXY_URL || 'https://api.model.dev/v1',
             })
         });
 
@@ -29,8 +33,8 @@ app.post('/api/chat', async (req, res) => {
 
         res.json({ content: response.message.content });
     } catch (error: any) {
-        console.error('API Error:', error);
-        res.status(500).json({ error: error.message });
+        console.error('Proxy Error executing SDK Chat completion:', error);
+        res.status(500).json({ error: error.message || "Unknown proxy connection error encountered." });
     }
 });
 
@@ -45,7 +49,7 @@ app.get('/api/models', async (req, res) => {
         const registry = await response.json() as Record<string, any>;
         const models: any[] = [];
 
-        // models.dev/api.json structure: { [providerId]: { name, models: { [modelId]: { id, name, modalities, tool_call } } } }
+        // Map models.dev registry into OpenResponses-compliant ModelDefinition[]
         for (const [providerId, providerData] of Object.entries(registry)) {
             if (!providerData || !providerData.models) continue;
 
@@ -53,14 +57,24 @@ app.get('/api/models', async (req, res) => {
                 const md = modelData as any;
                 models.push({
                     id: md.id || modelId,
-                    object: "model",
-                    created: Math.floor(Date.now() / 1000),
-                    owned_by: (providerData as any).name || providerId,
-                    meta: {
-                        vision: md.modalities?.input?.includes("image") || false,
-                        tools: md.tool_call || false,
-                        audio: md.modalities?.input?.includes("audio") || false
-                    }
+                    name: md.name || modelId,
+                    family: md.family || undefined,
+                    provider: providerData.name || providerId,
+
+                    // OpenResponses Capability Mapping
+                    attachment: md.attachment || false,
+                    tool_call: md.tool_call || false,
+                    structured_output: md.structured_output || false,
+                    reasoning: md.reasoning || false,
+
+                    // Modalities (direct passthrough from models.dev)
+                    modalities: md.modalities || { input: ['text'], output: ['text'] },
+
+                    // Token Limits
+                    limit: md.limit || { context: 4096, output: 4096 },
+
+                    // Cost (if available)
+                    ...(md.cost ? { cost: md.cost } : {})
                 });
             }
         }
