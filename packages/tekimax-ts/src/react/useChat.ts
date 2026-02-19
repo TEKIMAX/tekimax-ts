@@ -89,7 +89,7 @@ export function useChat<TProvider extends AIProvider = AIProvider>({
                 }
 
                 if (api) {
-                    // Shim standard HTTP Fetch response into AsyncIterable Stream to satisfy core logic
+                    // SSE streaming from backend proxy
                     stream = (async function* () {
                         const res = await fetch(api, {
                             method: 'POST',
@@ -98,8 +98,35 @@ export function useChat<TProvider extends AIProvider = AIProvider>({
                             signal: abortController.signal
                         })
                         if (!res.ok) throw new Error(await res.text())
-                        const data = await res.json()
-                        yield { delta: data.content }
+
+                        const reader = res.body?.getReader()
+                        if (!reader) throw new Error('No readable stream')
+
+                        const decoder = new TextDecoder()
+                        let buffer = ''
+
+                        while (true) {
+                            const { done, value } = await reader.read()
+                            if (done) break
+
+                            buffer += decoder.decode(value, { stream: true })
+                            const lines = buffer.split('\n')
+                            buffer = lines.pop() || ''
+
+                            for (const line of lines) {
+                                const trimmed = line.trim()
+                                if (!trimmed || !trimmed.startsWith('data: ')) continue
+                                const payload = trimmed.slice(6)
+                                if (payload === '[DONE]') return
+                                try {
+                                    const parsed = JSON.parse(payload)
+                                    if (parsed.error) throw new Error(parsed.error)
+                                    yield { delta: parsed.delta || '', thinking: parsed.thinking || '' }
+                                } catch (e) {
+                                    // Skip unparseable chunks
+                                }
+                            }
+                        }
                     })()
                 } else if (client) {
                     stream = client.text.generateStream(options)
