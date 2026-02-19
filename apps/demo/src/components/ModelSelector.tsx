@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { ChevronDown, Check, Zap, Eye, Wrench, Search } from "lucide-react"
+import { ChevronDown, Check, Zap, Eye, Wrench, Search, Key } from "lucide-react"
 
 export type ModelFeature = {
     id: string
@@ -19,6 +19,7 @@ export function ModelSelector({ selectedModel, onSelect }: Props) {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState("")
     const [searchQuery, setSearchQuery] = useState("")
+    const [apiKeyInput, setApiKeyInput] = useState(() => localStorage.getItem("tekimax_custom_api_key") || "")
 
     const [expandedProvider, setExpandedProvider] = useState<string | null>(null)
 
@@ -148,6 +149,25 @@ export function ModelSelector({ selectedModel, onSelect }: Props) {
 
                                     {expandedProvider === provider && (
                                         <div className="pl-3 pr-1 pt-1 pb-2 space-y-0.5 border-l-2 border-zinc-800 ml-3 mt-1">
+
+                                            <div className="pr-2 pb-1.5 mb-1.5 border-b border-zinc-800/50">
+                                                <div className="relative">
+                                                    <Key className="absolute left-2.5 top-1.5 w-3 h-3 text-zinc-500" />
+                                                    <input
+                                                        type="password"
+                                                        placeholder={`Paste API Key...`}
+                                                        value={apiKeyInput}
+                                                        onChange={(e) => {
+                                                            setApiKeyInput(e.target.value)
+                                                            localStorage.setItem("tekimax_custom_api_key", e.target.value)
+                                                            window.dispatchEvent(new Event('tekimax_settings_updated'))
+                                                        }}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="w-full bg-zinc-950/50 border border-zinc-800 rounded py-1 pl-7 pr-2 text-xs text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 transition-colors"
+                                                    />
+                                                </div>
+                                            </div>
+
                                             {groupedModels[provider].map(m => (
                                                 <button
                                                     key={m.id}
