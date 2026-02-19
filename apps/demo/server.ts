@@ -1,6 +1,9 @@
 import express from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
 import { Tekimax, OpenAIProvider } from 'tekimax-ts';
+
+dotenv.config();
 
 const app = express();
 app.use(cors());
@@ -13,8 +16,8 @@ app.post('/api/chat', async (req, res) => {
         // Securely instantiate the Tekimax SDK *only* on the backend
         const client = new Tekimax({
             provider: new OpenAIProvider({
-                apiKey: providerConfig?.apiKey || 'sk-default',
-                baseURL: providerConfig?.baseURL || 'https://api.model.dev/v1',
+                apiKey: process.env.MODEL_PROXY_KEY || providerConfig?.apiKey || 'sk-default',
+                baseURL: process.env.MODEL_PROXY_URL || providerConfig?.baseURL || 'http://localhost:8080/v1',
             })
         });
 
@@ -33,8 +36,8 @@ app.post('/api/chat', async (req, res) => {
 
 app.get('/api/models', async (req, res) => {
     try {
-        const apiKey = (req.headers['x-api-key'] as string) || 'sk-default';
-        const baseUrl = (req.headers['x-base-url'] as string) || 'https://api.model.dev/v1';
+        const apiKey = process.env.MODEL_PROXY_KEY || (req.headers['x-api-key'] as string) || 'sk-default';
+        const baseUrl = process.env.MODEL_PROXY_URL || (req.headers['x-base-url'] as string) || 'http://localhost:8080/v1';
 
         const response = await fetch(`${baseUrl}/models`, {
             method: 'GET',

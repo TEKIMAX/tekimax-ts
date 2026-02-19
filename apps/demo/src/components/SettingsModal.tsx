@@ -9,7 +9,7 @@ export function SettingsModal() {
     // Load saved settings
     useEffect(() => {
         setApiKey(localStorage.getItem("tekimax_custom_api_key") || "")
-        setBaseUrl(localStorage.getItem("tekimax_custom_base_url") || "https://api.model.dev/v1")
+        setBaseUrl(localStorage.getItem("tekimax_custom_base_url") || "http://localhost:8080/v1")
     }, [])
 
     const saveSettings = () => {
@@ -75,7 +75,7 @@ export function SettingsModal() {
                         </label>
                         <input
                             type="url"
-                            placeholder="https://api.model.dev/v1"
+                            placeholder="http://localhost:8080/v1"
                             value={baseUrl}
                             onChange={(e) => setBaseUrl(e.target.value)}
                             className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-green-500/50 focus:border-green-500/50 transition-all font-mono placeholder:text-zinc-600"
