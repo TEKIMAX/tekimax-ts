@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { ChevronDown, Check, Zap, Eye, Wrench } from "lucide-react"
+import { ChevronDown, Check, Zap, Eye, Wrench, Search } from "lucide-react"
 
 export type ModelFeature = {
     id: string
@@ -17,6 +17,7 @@ export function ModelSelector({ selectedModel, onSelect }: Props) {
     const [isOpen, setIsOpen] = useState(false)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState("")
+    const [searchQuery, setSearchQuery] = useState("")
 
     const fetchModels = async () => {
         setLoading(true)
@@ -72,6 +73,19 @@ export function ModelSelector({ selectedModel, onSelect }: Props) {
                     <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
                     <div className="absolute top-full left-0 mt-2 w-72 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-20 py-1 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
 
+                        <div className="p-2 border-b border-zinc-800">
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-2 w-4 h-4 text-zinc-500" />
+                                <input
+                                    type="text"
+                                    placeholder="Search models..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full bg-zinc-950/50 border border-zinc-800 rounded-md py-1.5 pl-9 pr-3 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-700"
+                                />
+                            </div>
+                        </div>
+
                         <div className="px-3 py-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider border-b border-zinc-800">
                             {loading ? "Discovering Models..." : error ? (
                                 <span className="text-red-400 flex items-center gap-1">⚠ {error}</span>
@@ -79,12 +93,13 @@ export function ModelSelector({ selectedModel, onSelect }: Props) {
                         </div>
 
                         <div className="max-h-64 overflow-y-auto p-1">
-                            {models.map(m => (
+                            {models.filter(m => m.id.toLowerCase().includes(searchQuery.toLowerCase())).map(m => (
                                 <button
                                     key={m.id}
                                     onClick={() => {
                                         onSelect(m.id)
                                         setIsOpen(false)
+                                        setSearchQuery("") // Reset search on select
                                     }}
                                     className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${selectedModel === m.id ? "bg-zinc-800 text-zinc-100" : "text-zinc-300 hover:bg-zinc-800/50 hover:text-zinc-100"
                                         }`}
