@@ -1,6 +1,6 @@
 import { HomeLayout } from 'fumadocs-ui/layouts/home';
 import Link from 'next/link';
-import { Zap, Globe, Shield, Heart } from 'lucide-react';
+import { Zap, Globe, Shield, Heart, Database } from 'lucide-react';
 import { CopyButton } from '@/components/copy-button';
 import { CustomCodeBlock } from '@/components/custom-code-block';
 import { BrandLogo } from '@/components/brand-logo';
@@ -117,17 +117,16 @@ export default function HomePage() {
                 <Code
                   title="USAGE_PREVIEW.TS"
                   lang="typescript"
-                  code={`import { Tekimax } from 'tekimax-ts';
-import { AnthropicProvider } from 'tekimax-anthropic';
+                  code={`import { Tekimax, AnthropicProvider } from 'tekimax-ts';
 
 const client = new Tekimax({
   provider: new AnthropicProvider({
-    apiKey: process.env.ANTHROPIC_KEY
+    apiKey: process.env.ANTHROPIC_API_KEY
   })
 });
 
-const stream = await client.chat.completions.create({
-  model: 'claude-3-5-sonnet-20240620',
+const stream = await client.text.chat.completions.create({
+  model: 'claude-4.6',
   messages: [{ role: 'user', content: 'Hello' }],
   stream: true
 });`}
@@ -202,5 +201,10 @@ const FEATURES = [
     title: 'Zero CVEs',
     description: 'Hardened supply chain. Built on Chainguard\'s secure Node.js runtime and continuously scanned by Trivy for zero vulnerabilities.',
     icon: Shield,
+  },
+  {
+    title: 'Edge Caching',
+    description: 'Built-in Redis utilities for response caching, rate limiting, and exact token budgets.',
+    icon: Database,
   },
 ];
