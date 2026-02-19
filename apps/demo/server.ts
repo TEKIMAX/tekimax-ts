@@ -36,23 +36,36 @@ app.post('/api/chat', async (req, res) => {
 
 app.get('/api/models', async (req, res) => {
     try {
-        const apiKey = process.env.MODEL_PROXY_KEY || (req.headers['x-api-key'] as string) || 'sk-default';
-        const baseUrl = process.env.MODEL_PROXY_URL || (req.headers['x-base-url'] as string) || 'http://localhost:8080/v1';
-
-        const response = await fetch(`${baseUrl}/models`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json'
-            }
-        });
+        const response = await fetch('https://models.dev/api.json');
 
         if (!response.ok) {
             throw new Error(`Upstream error: ${response.status} ${response.statusText}`);
         }
 
-        const data = await response.json();
-        res.json(data);
+        const registry = await response.json() as Record<string, any>;
+        const models: any[] = [];
+
+        // models.dev/api.json structure: { [providerId]: { name, models: { [modelId]: { id, name, modalities, tool_call } } } }
+        for (const [providerId, providerData] of Object.entries(registry)) {
+            if (!providerData || !providerData.models) continue;
+
+            for (const [modelId, modelData] of Object.entries(providerData.models)) {
+                const md = modelData as any;
+                models.push({
+                    id: md.id || modelId,
+                    object: "model",
+                    created: Math.floor(Date.now() / 1000),
+                    owned_by: (providerData as any).name || providerId,
+                    meta: {
+                        vision: md.modalities?.input?.includes("image") || false,
+                        tools: md.tool_call || false,
+                        audio: md.modalities?.input?.includes("audio") || false
+                    }
+                });
+            }
+        }
+
+        res.json({ object: "list", data: models });
     } catch (error: any) {
         console.error('Models API Error:', error);
         res.status(500).json({ error: error.message });
