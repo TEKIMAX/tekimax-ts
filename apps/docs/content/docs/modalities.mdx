@@ -6,7 +6,7 @@ description: Unified interface for Text, Images, Audio, and Video.
 import { Image, Mic, Video, Type } from 'lucide-react';
 import { Card, Cards } from 'fumadocs-ui/components/card';
 
-Tekimax organizes AI capabilities into four distinct **modalities**. Each modality maps to a namespace on the client, so IDE auto-complete always shows the right methods. Ensure your provider supports the modality you are calling — unsupported calls throw a descriptive error.
+Tekimax organizes AI capabilities into four distinct **modalities**. Each modality maps to a namespace on the client, so IDE auto-complete always shows the right methods. Using strict **Capability Interfaces** (`VisionCapability`, `ImageGenerationCapability`, etc.), the SDK knows exactly what your provider supports at compile time. Unsupported calls will instantly highlight as a TypeScript error!
 
 <Cards>
   <Card icon={<Type />} href="#text-chat" title="Text" description="Chat, Completions, and Embeddings" />

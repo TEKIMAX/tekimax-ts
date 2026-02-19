@@ -21,7 +21,7 @@ import { Card, Cards } from 'fumadocs-ui/components/card';
 
 -   **Security First**: Built on **Chainguard** images with a verified build pipeline. Zero CVEs.
 -   **Unified Interface**: Switch between OpenAI, Anthropic, Gemini, Grok, OpenRouter, and Ollama with a single line of code.
--   **Type-Safe**: Full IDE support with Zod schemas for every request and response.
+-   **Strict Modality Type-Safety**: Strong capability interfaces ensure your code only compiles when you invoke supported endpoints (e.g. `client.images.generate()` will error at compile-time on Ollama). Full IDE support with Zod schemas.
 -   **No Vendor Lock-in**: Decouple your application logic from specific AI provider SDKs. If a provider raises prices or goes down, swap the adapter — your application code stays the same.
 
 ## Supported Providers

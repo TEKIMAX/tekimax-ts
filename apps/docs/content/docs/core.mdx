@@ -46,26 +46,32 @@ console.log(response.message.content);
 
 Providers act as translation layers. They convert strict Tekimax types into the specific format required by the upstream API (e.g., OpenAI, Anthropic) and normalize the response back.
 
-All providers implement the `AIProvider` interface. Only `chat` and `chatStream` are required — the multi-modal methods are optional so that text-only providers (like Grok) don't need to stub them out.
+All providers implement the `AIProvider` interface. The base `AIProvider` is strictly scoped to text chat. Instead of having messy optional methods for other modalities, Tekimax uses **Capability Interfaces** (like `VisionCapability` or `ImageGenerationCapability`). Providers explicitly implement these interfaces to opt into specific modalities.
 
 ```typescript
-interface AIProvider {
+// The base provider is scoped strictly to text chat.
+export interface AIProvider {
   name: string;
+  chat: (options: ChatOptions) => Promise<ChatResult>;
+  chatStream: (options: ChatOptions) => AsyncIterable<StreamChunk>;
+}
 
-  // Required — every provider must support text chat.
-  chat(options: ChatOptions): Promise<ChatResult>;
-  chatStream(options: ChatOptions): AsyncIterable<StreamChunk>;
+// Providers selectively implement capability interfaces.
+export interface VisionCapability {
+  analyzeImage: (options: ImageAnalysisOptions) => Promise<ImageAnalysisResult>;
+}
 
-  // Optional — providers implement these to opt in to each modality.
-  generateImage?(options: ImageGenerationOptions): Promise<ImageResult>;
-  editImage?(options: ImageEditOptions): Promise<ImageResult>;
-  analyzeImage?(options: ImageAnalysisOptions): Promise<ImageAnalysisResult>;
-  generateSpeech?(options: SpeechGenerationOptions): Promise<SpeechResult>;
-  transcribeAudio?(options: TranscriptionOptions): Promise<TranscriptionResult>;
-  generateVideo?(options: VideoGenerationOptions): Promise<VideoResult>;
-  analyzeVideo?(options: VideoAnalysisOptions): Promise<VideoAnalysisResult>;
+export interface ImageGenerationCapability {
+  generateImage: (options: ImageGenerationOptions) => Promise<ImageResult>;
+}
+
+// Example: OpenAIProvider implements almost everything.
+export class OpenAIProvider implements AIProvider, VisionCapability, ImageGenerationCapability {
+  // ...
 }
 ```
+
+Because the `Tekimax` client namespaces use TypeScript generics (`client.images`), calling `.images.generate()` on a provider that lacks the `ImageGenerationCapability` will throw a **compile-time error**, giving you instant feedback in your IDE.
 
 ## Streaming
 
