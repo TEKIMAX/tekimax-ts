@@ -2,6 +2,7 @@
     "pages": [
         "index",
         "core",
+        "plugins",
         "modalities",
         "security",
         "adapters",

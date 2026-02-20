@@ -1,0 +1,103 @@
+---
+title: Plugins (Middleware)
+description: Snap in security, telemetry, and scalability hooks directly into the SDK request lifecycle.
+---
+
+The Tekimax SDK provides a robust middleware architecture via **Plugins**. 
+
+Instead of wrapping the entire SDK or duplicating logic across your app to handle caching, redaction, or logging, you can plug these directly into the core `Tekimax` client.
+
+## Pre-built Plugins
+
+The SDK exports three core plugins out of the box used for Enterprise readiness:
+
+1. **`LoggerPlugin`** (Telemetry): Automatically logs requests, stream chunks, tokens, and tool execution boundaries.
+2. **`PIIFilterPlugin`** (Security): Redacts standard patterns like emails (`[REDACTED EMAIL]`) and SSNs before they hit the provider.
+3. **`MaxContextOverflowPlugin`** (Scalability): Prevents token bloat in long-running loops by gently truncating the oldest messages (while safely preserving your System prompt).
+
+### Usage
+
+Pass the `plugins` array when initializing your `Tekimax` client:
+
+```typescript
+import { 
+    Tekimax, 
+    OpenAIProvider, 
+    PIIFilterPlugin, 
+    LoggerPlugin, 
+    MaxContextOverflowPlugin 
+} from 'tekimax-ts'
+
+const client = new Tekimax({
+    provider: new OpenAIProvider({ apiKey: 'sk-...' }),
+    plugins: [
+        new LoggerPlugin(),
+        new PIIFilterPlugin(),
+        new MaxContextOverflowPlugin(15) // Keeps a rolling window of 15 messages max
+    ]
+})
+```
+
+---
+
+## Building Custom Plugins
+
+Building a custom plugin is as simple as implementing the `TekimaxPlugin` interface. 
+
+You can hook into the exact moment **before a request is sent**, **after a response arrives**, **during every stream chunk**, or **around tool executions**.
+
+### The `TekimaxPlugin` Interface
+
+```typescript
+import type { PluginContext, ChatResult, StreamChunk, TekimaxPlugin } from 'tekimax-ts'
+
+export interface TekimaxPlugin {
+    name: string
+
+    /** Triggered when the Tekimax client is instantiated */
+    onInit?: (client: any) => void
+
+    /** Triggered before a chat or stream request is sent. Can mutate the context. */
+    beforeRequest?: (context: PluginContext) => Promise<void | PluginContext>
+
+    /** Triggered after a fully completed standard chat response */
+    afterResponse?: (context: PluginContext, result: ChatResult) => Promise<void>
+
+    /** Triggered on every chunk during a streaming response */
+    onStreamChunk?: (context: PluginContext, chunk: StreamChunk) => void
+
+    /** Triggered before a tool is executed */
+    beforeToolExecute?: (toolName: string, args: unknown) => Promise<void>
+
+    /** Triggered after a tool is executed */
+    afterToolExecute?: (toolName: string, result: unknown) => Promise<void>
+}
+```
+
+### Example: Custom Langfuse Logger
+
+Here is an example of how you might integrate a third-party observability platform like Langfuse using the plugin architecture:
+
+```typescript
+export class LangfusePlugin implements TekimaxPlugin {
+    name = 'LangfusePlugin'
+    private langfuse = new Langfuse(...)
+
+    async beforeRequest(context: PluginContext) {
+        // Start a Langfuse observation trace
+        this.langfuse.trace({
+            name: "Chat Generation",
+            model: context.model,
+            input: context.messages
+        })
+    }
+
+    async afterResponse(context: PluginContext, result: ChatResult) {
+        // Log the completion and token usage
+        this.langfuse.generation({
+            output: result.message.content,
+            usage: result.usage
+        })
+    }
+}
+```

@@ -16,34 +16,54 @@ app.post('/api/chat', async (req, res) => {
         const resolvedKey = providerConfig?.apiKey || process.env.MODEL_PROXY_KEY || 'sk-default';
         const resolvedURL = providerConfig?.baseURL || process.env.MODEL_PROXY_URL || 'http://localhost:11434/v1';
 
-        console.log(`[Chat Stream] model=${model} baseURL=${resolvedURL}`);
+        console.log(`[Tekimax SDK] model=${model} baseURL=${resolvedURL}`);
 
-        const provider = new OpenAIProvider({
-            apiKey: resolvedKey,
-            baseURL: resolvedURL,
+        // Instantiate through the official Tekimax SDK
+        const client = new Tekimax({
+            provider: new OpenAIProvider({
+                apiKey: resolvedKey,
+                baseURL: resolvedURL,
+            })
         });
 
-        // Set SSE headers
+        // Set SSE headers for streaming
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
         res.flushHeaders();
 
-        const stream = provider.chatStream({
-            model: model || 'gpt-4o',
-            messages: messages,
-        });
+        let chunksReceived = false;
 
-        for await (const chunk of stream) {
-            const data = JSON.stringify({ delta: chunk.delta || '', thinking: chunk.thinking || '' });
-            res.write(`data: ${data}\n\n`);
+        try {
+            // Use the Tekimax SDK's official streaming API
+            const stream = client.text.generateStream({
+                model: model || 'mistral:latest',
+                messages: messages,
+            });
+
+            for await (const chunk of stream) {
+                chunksReceived = true;
+                const data = JSON.stringify({ delta: chunk.delta || '', thinking: chunk.thinking || '' });
+                res.write(`data: ${data}\n\n`);
+            }
+        } catch (streamErr: any) {
+            console.log('[Tekimax SDK] Streaming failed, falling back to non-streaming:', streamErr.message);
+        }
+
+        // Fallback: if streaming yielded nothing, use the SDK's non-streaming API
+        if (!chunksReceived) {
+            const response = await client.text.chat.completions.create({
+                model: model || 'mistral:latest',
+                messages: messages,
+            });
+            const content = response.message.content || '';
+            res.write(`data: ${JSON.stringify({ delta: content })}\n\n`);
         }
 
         res.write(`data: [DONE]\n\n`);
         res.end();
     } catch (error: any) {
-        console.error('Stream Error:', error.message);
-        // If headers already sent, just end
+        console.error('[Tekimax SDK] Error:', error.message);
         if (res.headersSent) {
             res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
             res.end();

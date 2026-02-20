@@ -1,5 +1,5 @@
 import type { AIProvider } from './adapter'
-import type { GenerateTextResult, Message, Tool } from './types'
+import type { GenerateTextResult, Message, Tool, TekimaxPlugin, PluginContext } from './types'
 
 export interface GenerateTextOptions {
     model: string
@@ -9,14 +9,17 @@ export interface GenerateTextOptions {
     temperature?: number
     maxTokens?: number
     signal?: AbortSignal
+    plugins?: TekimaxPlugin[]
 }
 
 export async function generateText({
     adapter,
+    plugins = [],
     ...options
 }: GenerateTextOptions & { adapter: AIProvider }): Promise<GenerateTextResult> {
     const { model, tools, maxSteps = 1, temperature, maxTokens, signal } = options
-    const currentMessages = [...options.messages]
+    let currentMessages = [...options.messages]
+    let currentModel = model
     let steps = 0
 
     // Transform tools map to array for caching/adapter
@@ -25,14 +28,33 @@ export async function generateText({
     while (steps < maxSteps) {
         steps++
 
+        let context: PluginContext = {
+            model: currentModel,
+            messages: [...currentMessages],
+            timestamp: Date.now(),
+            requestOptions: { ...options }
+        }
+        for (const plugin of plugins) {
+            if (plugin.beforeRequest) {
+                const updated = await plugin.beforeRequest(context)
+                if (updated) context = updated
+            }
+        }
+        currentMessages = context.messages
+        currentModel = context.model
+
         const result = await adapter.chat({
-            model,
+            model: currentModel,
             messages: currentMessages,
             tools: toolDefinitions,
             temperature,
             maxTokens,
             signal,
         })
+
+        for (const plugin of plugins) {
+            if (plugin.afterResponse) await plugin.afterResponse(context, result)
+        }
 
         const { message } = result
         currentMessages.push(message)
@@ -55,26 +77,27 @@ export async function generateText({
         // Handle Tool Calls
         const toolResults = await Promise.all(
             message.toolCalls.map(async (call) => {
-                const tool = tools?.[call.function.name]
+                const toolName = call.function.name
+                const tool = tools?.[toolName]
                 if (!tool) {
-                    return {
-                        id: call.id,
-                        result: `Error: Tool ${call.function.name} not found`,
-                    }
+                    return { id: call.id, result: `Error: Tool ${toolName} not found` }
                 }
 
                 try {
-                    const args = JSON.parse(call.function.arguments)
+                    let args = JSON.parse(call.function.arguments)
+                    for (const plugin of plugins) {
+                        if (plugin.beforeToolExecute) await plugin.beforeToolExecute(toolName, args)
+                    }
+
                     const output = await tool.execute(args)
-                    return {
-                        id: call.id,
-                        result: output,
+
+                    for (const plugin of plugins) {
+                        if (plugin.afterToolExecute) await plugin.afterToolExecute(toolName, output)
                     }
+
+                    return { id: call.id, result: output }
                 } catch (error: any) {
-                    return {
-                        id: call.id,
-                        result: `Error executing tool: ${error.message}`,
-                    }
+                    return { id: call.id, result: `Error executing tool: ${error.message}` }
                 }
             })
         )
@@ -88,8 +111,6 @@ export async function generateText({
                 name: message.toolCalls.find(c => c.id === res.id)?.function.name,
             })
         }
-
-        // Loop continues to next step to let model process results
     }
 
     // If we exit loop, max steps reached
@@ -97,7 +118,7 @@ export async function generateText({
         text: '',
         toolCalls: [],
         toolResults: [],
-        finishReason: 'length', // or 'tool_calls' if strictly ending on tools
+        finishReason: 'length',
         usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
         warnings: ['Max steps reached'],
     }

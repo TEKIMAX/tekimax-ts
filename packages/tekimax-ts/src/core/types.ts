@@ -309,3 +309,34 @@ export interface ModelDefinition {
     /** Pricing per 1M tokens */
     cost?: ModelCost
 }
+
+// --- Plugin Architecture Types ---
+
+export interface PluginContext {
+    model: string
+    messages: Array<Message>
+    timestamp: number
+    requestOptions?: Record<string, unknown>
+}
+
+export interface TekimaxPlugin {
+    name: string
+
+    /** Triggered when the Tekimax client is instantiated */
+    onInit?: (client: any) => void
+
+    /** Triggered before a chat or stream request is sent. Can mutate the context. */
+    beforeRequest?: (context: PluginContext) => Promise<void | PluginContext>
+
+    /** Triggered after a fully completed standard chat response */
+    afterResponse?: (context: PluginContext, result: ChatResult) => Promise<void>
+
+    /** Triggered on every chunk during a streaming response */
+    onStreamChunk?: (context: PluginContext, chunk: StreamChunk) => void
+
+    /** Triggered before a tool is executed */
+    beforeToolExecute?: (toolName: string, args: unknown) => Promise<void>
+
+    /** Triggered after a tool is executed */
+    afterToolExecute?: (toolName: string, result: unknown) => Promise<void>
+}

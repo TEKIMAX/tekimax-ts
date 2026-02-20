@@ -8,18 +8,18 @@ import { MessageList } from './components/MessageList';
 import { ChatInput } from './components/ChatInput';
 
 export default function App() {
-  const [selectedModel, setSelectedModel] = useState("gpt-4o");
+  const [selectedModel, setSelectedModel] = useState("mistral:latest");
   const [providerConfig, setProviderConfig] = useState({
-    apiKey: localStorage.getItem("tekimax_custom_api_key") || "sk-default",
-    baseURL: localStorage.getItem("tekimax_custom_base_url") || "http://localhost:8080/v1"
+    apiKey: localStorage.getItem("tekimax_custom_api_key") || "ollama",
+    baseURL: localStorage.getItem("tekimax_custom_base_url") || "http://localhost:11434/v1"
   });
 
   // Re-initialize config when Settings Modal dispatches an update
   useEffect(() => {
     const handleUpdate = () => {
       setProviderConfig({
-        apiKey: localStorage.getItem("tekimax_custom_api_key") || "",
-        baseURL: localStorage.getItem("tekimax_custom_base_url") || "http://localhost:8080/v1"
+        apiKey: localStorage.getItem("tekimax_custom_api_key") || "ollama",
+        baseURL: localStorage.getItem("tekimax_custom_base_url") || "http://localhost:11434/v1"
       });
     };
     window.addEventListener('tekimax_settings_updated', handleUpdate);

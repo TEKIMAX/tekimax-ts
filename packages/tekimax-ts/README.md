@@ -61,6 +61,52 @@ const proxyClient = new Tekimax({
         baseURL: 'https://api.my-custom-proxy.internal/v1' 
     })
 })
+
+### Streaming
+
+Tekimax-TS uses standard Javascript Async Iterables for real-time streaming:
+
+```typescript
+const stream = await client.text.generateStream({
+  model: "gpt-4o",
+  messages: [{ role: "user", content: "Tell me a story" }]
+})
+
+for await (const chunk of stream) {
+  process.stdout.write(chunk.delta)
+}
+```
+
+## 🔌 Plugin Architecture (Lifecycle Hooks)
+
+The SDK provides a robust middleware architecture via `plugins`. You can snap in pre-built plugins for Security, Scalability, and Telemetry, or build your own.
+
+```typescript
+import { Tekimax, OpenAIProvider, PIIFilterPlugin, LoggerPlugin, MaxContextOverflowPlugin } from 'tekimax-ts'
+
+const client = new Tekimax({
+    provider: new OpenAIProvider({ apiKey: 'sk-...' }),
+    plugins: [
+        new LoggerPlugin(), // Telemetry
+        new PIIFilterPlugin(), // Security: Redacts emails and SSNs
+        new MaxContextOverflowPlugin(15) // Scalability: Prevents context bloat in long loops
+    ]
+})
+```
+
+### Building Custom Plugins
+Implement the `TekimaxPlugin` interface to hook into the request/response lifecycle:
+
+```typescript
+export interface TekimaxPlugin {
+    name: string
+    onInit?: (client: Tekimax) => void
+    beforeRequest?: (context: PluginContext) => Promise<void | PluginContext>
+    afterResponse?: (context: PluginContext, result: ChatResult) => Promise<void>
+    onStreamChunk?: (context: PluginContext, chunk: StreamChunk) => void
+    beforeToolExecute?: (toolName: string, args: unknown) => Promise<void>
+    afterToolExecute?: (toolName: string, result: unknown) => Promise<void>
+}
 ```
 
 ### 2. Multi-Modal Interfaces

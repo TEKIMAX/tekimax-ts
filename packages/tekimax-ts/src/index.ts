@@ -22,4 +22,5 @@ export * from './core/fallback'
 export * from './core/convex'
 export * from './core/cache'
 export * from './tekimax'
+export * from './plugins'
 

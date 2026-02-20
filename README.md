@@ -33,10 +33,12 @@ The **Tekimax SDK** solves the fragmentation of AI APIs. Instead of rewriting yo
 
 - **Write Once, Run Anywhere**: Switch between OpenAI (Cloud) and Ollama (Local) with a single line of config.
 - **Type-Safe**: Full TypeScript support with Zod validation for inputs and outputs.
-- **Multi-Modal**: Text, images, audio, video, and embeddings through a unified namespace API.
-- **React Ready**: Includes a `useChat` hook for instant UI integration.
+- **Multi-Modal**: Text, images, audio, video, and **embeddings** through a unified namespace API.
+- **OpenResponses Catalog**: Fuses `models.dev` metadata into standard `ModelDefinition` objects for reasoning, modalities, and token limits.
+- **Middleware Plugins**: Built-in architecture for Security (`PIIFilterPlugin`), Scalability (`MaxContextOverflowPlugin`), and Telemetry (`LoggerPlugin`).
+- **React Ready**: Includes a `useChat` hook for instant UI integration, complete with SSE streaming.
 - **Redis Adapter** _(optional)_: Response caching, rate limiting, token budgets, and session storage with any Redis client.
-- **Convex Integration**: Provision and manage [Convex](https://convex.dev) projects, push schemas, set env vars, and deploy — all from code.
+- **Convex Integration**: Provision and manage [Convex](https://convex.dev) projects from code.
 
 
 ## 💻 Installation
@@ -129,6 +131,29 @@ const analysis = await client.videos.analyze({
 })
 ```
 
+#### Embeddings
+
+```typescript
+const vectors = await client.text.embed({
+    model: 'text-embedding-3-small',
+    input: ['Hello world', 'Tekimax SDK is awesome']
+})
+console.log(vectors.embeddings)
+```
+
+### 3. Cross-Provider Model Catalog
+
+The SDK strictly implements the **OpenResponses** schema, optionally fusing metadata from `models.dev` so your application always knows what capabilities the active provider supports.
+
+```typescript
+// Returns standard ModelDefinition[] populated with reasoning levels, modal limits, and costs
+const models = await client.provider.getModels?.() 
+
+if (models) {
+    console.log(models.find(m => m.id === 'gpt-4o')?.modalities.input) // ['text', 'image', 'audio', 'video']
+}
+```
+
 ## 🏗️ Monorepo Structure
 
 This repository is managed as a **Turborepo** monorepo.
@@ -177,13 +202,16 @@ const sessions = new SessionStore(redis, { ttl: 1800 })
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| **Batch API** | OpenAI's Batch API for 50% cost reduction on large jobs. Queue thousands of requests and retrieve results asynchronously. | 🔜 Planned |
-| **Edge Runtime** | Cloudflare Workers / Deno support. Current `Buffer` usage blocks edge compatibility — will be replaced with `Uint8Array` and Web Streams. | 🔜 Planned |
-| **Assistants / Threads** | Stateful conversation management with persistence. Create threads, append messages, and resume conversations across sessions. | 🔜 Planned |
-| **Fine-tuning API** | Programmatic fine-tuning via OpenAI and Gemini APIs. Upload training data, launch jobs, and deploy custom models through a unified interface. | 🔜 Planned |
-| **Observability** | OpenTelemetry spans for every provider call — latency, tokens, cost, and error rate. | 🔜 Planned |
-| **Convex Integration** | Provision and manage [Convex](https://convex.dev) projects directly via the SDK. Create projects, push schemas, set env vars, and deploy. | ✅ Shipped |
-| **Redis Adapter** | Optional response caching, rate limiting, token budget tracking, and session storage with any Redis-compatible client. | ✅ Shipped |
+| **Middleware Plugins** | Pre-built and custom lifecycle hooks for Security, Telemetry, and Scalability. | ✅ Shipped |
+| **OpenResponses Catalog** | Provider abstraction parsing `models.dev` metadata for token limits, reasoning capabilities, and allowed modalities. | ✅ Shipped |
+| **Real-time SSE Streaming** | Native SDK token streaming, `StreamChunk` event typing, and full React hooks support (`useChat`). | ✅ Shipped |
+| **Convex Integration** | Provision and manage [Convex](https://convex.dev) projects directly from code. | ✅ Shipped |
+| **Redis Adapter** | Optional response caching, rate limiting, token budget tracking, and session storage with any Redis client. | ✅ Shipped |
+| **Observability** | Telemetry and tracing via `plugins` architecture. | ✅ Shipped |
+| **Batch API** | Queue thousands of requests and retrieve results asynchronously. | 🔜 Planned |
+| **Edge Runtime** | Cloudflare Workers / Deno support. | 🔜 Planned |
+| **Assistants / Threads** | Stateful conversation management with persistence. | 🔜 Planned |
+| **Fine-tuning API** | Programmatic fine-tuning via internal and integrated APIs. | 🔜 Planned |
 
 > **Want to help?** Pick a feature and open a PR, or join the discussion in [GitHub Issues](https://github.com/TEKIMAX/tekimax-ts/issues).
 

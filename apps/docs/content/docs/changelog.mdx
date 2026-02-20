@@ -5,6 +5,23 @@ description: Latest updates and changes to the Tekimax SDK.
 
 # Changelog
 
+## v0.2.0 (Latest)
+
+### Enterprise Plugin Architecture
+- **Middleware Hooks**: Introduced the `TekimaxPlugin` interface exposing lifecycle hooks (`beforeRequest`, `afterResponse`, `onStreamChunk`, `beforeToolExecute`, `afterToolExecute`).
+- **Security (`PIIFilterPlugin`)**: Built-in plugin to redact sensitive regex patterns (emails, SSNs) before they leave the client.
+- **Scalability (`MaxContextOverflowPlugin`)**: Built-in plugin to safely truncate context windows on long-running loops while safely preserving system prompts.
+- **Telemetry (`LoggerPlugin`)**: Standardized console logging for requests, tool executions, and tokens.
+
+### Core Capabilities
+- **Real-Time Streaming**: Native support for Server-Sent Events (SSE) via Javascript Async Iterables (`client.text.generateStream()`).
+- **Embeddings API**: Unified interface for text embeddings (`client.text.embed()`).
+- **React Hooks**: Exported `useChat` hook from `tekimax-ts/react` supporting chunked streaming directly in the frontend.
+
+### Provider Catalog Fusion
+- **Models.dev Introspection**: The SDK now optionally fuses metadata from the `models.dev` catalog into standard `ModelDefinition` objects.
+- **Strict Capabilities**: `getModels()` exposes an authoritative map of model limits, costs, supported modalities, and reasoning (`think`) capabilities.
+
 ## v0.1.9 (Latest)
 
 ### Multi-Modal Parity

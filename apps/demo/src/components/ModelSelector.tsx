@@ -175,7 +175,7 @@ export function ModelSelector({ selectedModel, onSelect }: Props) {
                                                     <input
                                                         type="url"
                                                         placeholder={`Base URL (e.g. https://open.bigmodel.cn/api/paas/v4)`}
-                                                        defaultValue={localStorage.getItem("tekimax_custom_base_url") || "http://localhost:8080/v1"}
+                                                        defaultValue={localStorage.getItem("tekimax_custom_base_url") || "http://localhost:11434/v1"}
                                                         onChange={(e) => {
                                                             localStorage.setItem("tekimax_custom_base_url", e.target.value)
                                                             window.dispatchEvent(new Event('tekimax_settings_updated'))
