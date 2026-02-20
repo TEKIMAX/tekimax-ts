@@ -1,6 +1,6 @@
 {
     "name": "tekimax-ts",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "type": "module",
     "description": "A type-safe, framework-agnostic AI SDK for building AI-powered apps.",
     "homepage": "https://tekimax.com",
