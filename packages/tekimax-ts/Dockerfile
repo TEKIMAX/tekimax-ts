@@ -7,7 +7,7 @@ WORKDIR /app
 COPY --chown=node:node package.json package-lock.json ./
 
 # Install dependencies
-RUN npm ci --ignore-scripts
+RUN npm ci --ignore-scripts --legacy-peer-deps
 
 # Copy the source code
 COPY --chown=node:node . .
