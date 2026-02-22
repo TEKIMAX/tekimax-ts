@@ -22,5 +22,6 @@ export * from './core/fallback'
 export * from './core/convex'
 export * from './core/cache'
 export * from './tekimax'
-export * from './plugins'
-
+export { LoggerPlugin } from './plugins/logger';
+export { PIIFilterPlugin } from './plugins/pii';
+export { MaxContextOverflowPlugin } from './plugins/context';
