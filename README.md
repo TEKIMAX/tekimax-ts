@@ -38,7 +38,6 @@ The **Tekimax SDK** solves the fragmentation of AI APIs. Instead of rewriting yo
 - **Middleware Plugins**: Built-in architecture for Security (`PIIFilterPlugin`), Scalability (`MaxContextOverflowPlugin`), and Telemetry (`LoggerPlugin`).
 - **React Ready**: Includes a `useChat` hook for instant UI integration, complete with SSE streaming.
 - **Redis Adapter** _(optional)_: Response caching, rate limiting, token budgets, and session storage with any Redis client.
-- **Convex Integration**: Provision and manage [Convex](https://convex.dev) projects from code.
 
 
 ## 💻 Installation
@@ -205,7 +204,6 @@ const sessions = new SessionStore(redis, { ttl: 1800 })
 | **Middleware Plugins** | Pre-built and custom lifecycle hooks for Security, Telemetry, and Scalability. | ✅ Shipped |
 | **OpenResponses Catalog** | Provider abstraction parsing `models.dev` metadata for token limits, reasoning capabilities, and allowed modalities. | ✅ Shipped |
 | **Real-time SSE Streaming** | Native SDK token streaming, `StreamChunk` event typing, and full React hooks support (`useChat`). | ✅ Shipped |
-| **Convex Integration** | Provision and manage [Convex](https://convex.dev) projects directly from code. | ✅ Shipped |
 | **Redis Adapter** | Optional response caching, rate limiting, token budget tracking, and session storage with any Redis client. | ✅ Shipped |
 | **Observability** | Telemetry and tracing via `plugins` architecture. | ✅ Shipped |
 | **Batch API** | Queue thousands of requests and retrieve results asynchronously. | 🔜 Planned |

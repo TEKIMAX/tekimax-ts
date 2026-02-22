@@ -19,7 +19,6 @@ export * from './core/cost'
 export * from './core/retry'
 export * from './core/middleware'
 export * from './core/fallback'
-export * from './core/convex'
 export * from './core/cache'
 export * from './tekimax'
 export { LoggerPlugin } from './plugins/logger';
