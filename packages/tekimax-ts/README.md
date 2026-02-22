@@ -22,7 +22,6 @@ npm install tekimax-ts
 - **Zero Latency**: Lightweight adapter pattern with zero runtime overhead.
 - **Zero CVEs**: Hardened supply chain using Chainguard images.
 - **Redis Adapter** _(optional)_: Response caching, rate limiting, token budgets, and session storage with any Redis client.
-- **Convex Integration**: Provision and manage [Convex](https://convex.dev) projects, push schemas, set env vars, and deploy — all from code.
 
 ## 💻 Usage
 
@@ -237,7 +236,6 @@ const sessions = new SessionStore(redis, { ttl: 1800 })        // Sessions
 | **Assistants / Threads** | Stateful conversation management with persistence. Create threads, append messages, and resume conversations across sessions. | 🔜 Planned |
 | **Fine-tuning API** | Programmatic fine-tuning via OpenAI and Gemini APIs. Upload training data, launch jobs, and deploy custom models through a unified interface. | 🔜 Planned |
 | **Observability** | OpenTelemetry spans for every provider call — latency, tokens, cost, and error rate. | 🔜 Planned |
-| **Convex Integration** | Provision and manage [Convex](https://convex.dev) projects directly via the SDK. Create projects, push schemas, set env vars, and deploy. | ✅ Shipped |
 | **Redis Adapter** | Optional response caching, rate limiting, token budget tracking, and session storage with any Redis-compatible client. | ✅ Shipped |
 
 > **Want to help?** Pick a feature and open a PR, or join the discussion in [GitHub Issues](https://github.com/TEKIMAX/tekimax-ts/issues).
