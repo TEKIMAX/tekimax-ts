@@ -24,3 +24,5 @@ export * from './tekimax'
 export { LoggerPlugin } from './plugins/logger';
 export { PIIFilterPlugin } from './plugins/pii';
 export { MaxContextOverflowPlugin } from './plugins/context';
+export { ProvisionPlugin, ApiNamespace } from './plugins/provision';
+export type { ProvisionConfig, ApiEndpoint, ApiResponse } from './plugins/provision';
