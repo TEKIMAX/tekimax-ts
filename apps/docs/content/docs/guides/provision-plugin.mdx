@@ -1,0 +1,139 @@
+---
+title: ProvisionPlugin
+description: Endpoint-agnostic API gateway client with deployment-scoped authentication, rate limiting, and namespace factory.
+---
+
+The **ProvisionPlugin** is a standalone API client for authenticated, deployment-scoped API access. Unlike the AI-focused plugins (Logger, PII, MaxContext), this plugin operates independently as a REST client with automatic auth injection.
+
+## Installation
+
+```typescript
+import { ProvisionPlugin } from 'tekimax-ts'
+```
+
+## Quick Start
+
+```typescript
+const plugin = new ProvisionPlugin({
+    apiUrl: 'https://your-api.example.com',
+    apiKey: 'your-api-key',
+    deploymentId: 'dep_abc123',
+})
+
+await plugin.initialize()
+
+// Create typed namespaces
+const naics = plugin.api('/api/naics')
+const ocr = plugin.api('/api/ocr')
+
+// Make requests
+const results = await naics.get('/search', { q: 'software' })
+const code = await naics.get('/codes/541511')
+const extracted = await ocr.post('/', formData)
+```
+
+## Configuration
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `apiUrl` | `string` | ✅ | Base URL of the API server |
+| `apiKey` | `string` | ✅ | API key for authentication |
+| `deploymentId` | `string` | ✅ | Unique deployment identifier |
+| `maxRequestsPerMinute` | `number` | ❌ | Client-side rate limit (default: 60) |
+| `timeout` | `number` | ❌ | Request timeout in ms (default: 30000) |
+
+## Namespace Factory
+
+The `plugin.api(basePath)` method creates a scoped namespace that prepends the base path to all requests:
+
+```typescript
+const naics = plugin.api('/api/naics')
+
+// GET /api/naics/search?q=restaurants
+await naics.get('/search', { q: 'restaurants' })
+
+// GET /api/naics/codes/722511
+await naics.get('/codes/722511')
+
+// GET /api/naics/sectors
+await naics.get('/sectors')
+```
+
+Each namespace shares the same auth headers and rate limiter.
+
+## Security Model
+
+Every request automatically includes two security headers:
+
+| Header | Value | Purpose |
+|--------|-------|---------|
+| `X-API-Key` | From config `apiKey` | Authenticates the request |
+| `X-Deployment-ID` | From config `deploymentId` | Identifies the deployment + authorizes API access |
+
+The API server validates:
+1. The API key is valid
+2. The deployment ID exists in the database
+3. The requested API feature is in the deployment's `enabledApis` list
+
+```
+Client Request                    Server Middleware
+─────────────                     ─────────────────
+X-API-Key: abc123          →      requireReadAuth()     ✓ Valid key
+X-Deployment-ID: dep_456   →      requireDeploymentAuth("sba-naics")
+                                    ├─ Deployment exists?  ✓
+                                    └─ "sba-naics" in enabledApis?  ✓
+                                  → Handler executes
+```
+
+## Lifecycle
+
+```typescript
+// Initialize (validates config, prepares rate limiter)
+await plugin.initialize()
+
+// Use the plugin...
+
+// Cleanup (clears rate limiter timers)
+await plugin.destroy()
+```
+
+## Environment Variables
+
+When used in a provisioned whitelabel app, the plugin reads these env vars automatically:
+
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_URL` | API server URL (set during provisioning) |
+| `VITE_ADMIN_API_KEY` | API key (set during provisioning) |
+| `DEPLOYMENT_ID` | Unique deployment identifier (set during provisioning) |
+| `ENABLED_APIS` | Comma-separated list of enabled API slugs |
+
+## Example: Full Integration
+
+```typescript
+import { ProvisionPlugin } from 'tekimax-ts'
+
+// Read from environment
+const plugin = new ProvisionPlugin({
+    apiUrl: import.meta.env.VITE_API_URL,
+    apiKey: import.meta.env.VITE_ADMIN_API_KEY,
+    deploymentId: import.meta.env.DEPLOYMENT_ID,
+})
+
+await plugin.initialize()
+
+// Check if an API is enabled before using it
+const enabledApis = (import.meta.env.ENABLED_APIS || '').split(',')
+
+if (enabledApis.includes('sba-naics')) {
+    const naics = plugin.api('/api/naics')
+    const results = await naics.get('/search', { q: 'software development' })
+    console.log(results)
+}
+
+if (enabledApis.includes('ocr')) {
+    const ocr = plugin.api('/api/ocr')
+    const extracted = await ocr.post('/url', { url: 'https://example.com/invoice.pdf' })
+    console.log(extracted)
+}
+```

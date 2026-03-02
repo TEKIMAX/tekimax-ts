@@ -14,6 +14,7 @@ The SDK exports three core plugins out of the box used for Enterprise readiness:
 1. **`LoggerPlugin`** (Telemetry): Automatically logs requests, stream chunks, tokens, and tool execution boundaries.
 2. **`PIIFilterPlugin`** (Security): Redacts standard patterns like emails (`[REDACTED EMAIL]`) and SSNs before they hit the provider.
 3. **`MaxContextOverflowPlugin`** (Scalability): Prevents token bloat in long-running loops by gently truncating the oldest messages (while safely preserving your System prompt).
+4. **`ProvisionPlugin`** (API Gateway): Endpoint-agnostic REST client with deployment-scoped auth, rate limiting, and namespace factory. See the [full ProvisionPlugin guide](/docs/guides/provision-plugin).
 
 ### Usage
 
