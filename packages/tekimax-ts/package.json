@@ -1,6 +1,6 @@
 {
   "name": "tekimax-omat",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "type": "module",
   "description": "Open Multimodal Assessment Toolkit — a type-safe AI SDK for building human-centered, multimodal AI applications.",
   "homepage": "https://tekimax.com",
