@@ -1,8 +1,8 @@
 {
-  "name": "tekimax-ts",
-  "version": "0.3.0",
+  "name": "tekimax-omat",
+  "version": "0.4.0",
   "type": "module",
-  "description": "A type-safe, framework-agnostic AI SDK for building AI-powered apps.",
+  "description": "Open Multimodal Assessment Toolkit — a type-safe AI SDK for building human-centered, multimodal AI applications.",
   "homepage": "https://tekimax.com",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -41,15 +41,20 @@
     "check:deps": "npx tsx ../../scripts/check-updates.ts"
   },
   "keywords": [
+    "omat",
+    "ai",
     "sdk",
+    "k12",
+    "assessment",
+    "multimodal",
     "openapi",
-    "kubb"
+    "formative-assessment"
   ],
   "author": "Tekimax <info@tekimax.com>",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TEKIMAX/tekimax-ts.git"
+    "url": "git+https://github.com/TEKIMAX/tekimax-omat.git"
   },
   "publishConfig": {
     "access": "public"
