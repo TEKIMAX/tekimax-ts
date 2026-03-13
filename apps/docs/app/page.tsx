@@ -46,7 +46,7 @@ export default function HomePage() {
         },
         {
           text: 'GitHub',
-          url: 'https://github.com/TEKIMAX/tekimax-ts',
+          url: 'https://github.com/TEKIMAX/tekimax-omat',
         },
       ]}
     >
@@ -67,12 +67,14 @@ export default function HomePage() {
               </div>
 
               <h1 className="text-5xl lg:text-7xl font-bold tracking-tighter mb-8 leading-[0.9]">
-                <span className="bg-foreground text-orange-400">AI ADAPTER</span><br />
-                <span className="bg-foreground text-blue-400">LAYER.</span>
+                <span className="bg-foreground text-green-400">OPEN</span><br />
+                <span className="bg-foreground text-blue-400">MULTIMODAL</span><br />
+                <span className="bg-foreground text-purple-400">ASSESSMENT</span><br />
+                <span className="bg-foreground text-orange-400">TOOLKIT.</span>
               </h1>
 
               <p className="text-lg text-muted-foreground mb-12 max-w-md leading-relaxed">
-                <span className="font-mono text-orange-400 font-bold">[<span className="bg-foreground text-purple-400">TEKIMAX.</span><span className="bg-foreground text-red-400">SDK</span>]</span> End-to-end TypeScript support. Hardened supply chain. Zod schemas for runtime validation of every request/response.
+                <span className="font-mono text-green-400 font-bold">[<span className="bg-foreground text-purple-400">OMAT</span>]</span> An open-source framework for K-12 edtech developers to build AI-powered formative assessments using multimodal student inputs. Built on <span className="font-bold text-foreground">tekimax-omat</span>.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
@@ -83,7 +85,7 @@ export default function HomePage() {
                   Read Docs -&gt;
                 </Link>
                 <a
-                  href="https://github.com/TEKIMAX/tekimax-ts"
+                  href="https://github.com/TEKIMAX/tekimax-omat"
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex h-14 items-center justify-center border border-border bg-background px-8 text-base font-bold uppercase tracking-wide hover:bg-muted transition-colors"
@@ -135,6 +137,69 @@ const stream = await client.text.chat.completions.create({
             </div>
           </div>
 
+
+          {/* OMAT Section */}
+          <div className="border-b border-border p-12 lg:p-24">
+            <div className="max-w-4xl mx-auto">
+              <div className="mb-2 inline-flex gap-3">
+                <span className="inline-block border border-green-600 text-green-600 px-3 py-1 text-xs font-bold uppercase tracking-wider">
+                  Open Source
+                </span>
+                <span className="inline-block border border-border px-3 py-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Apache 2.0
+                </span>
+              </div>
+
+              <h2 className="text-3xl lg:text-4xl font-bold uppercase tracking-tighter mb-4">
+                OMAT — Open Multimodal<br />Assessment Toolkit
+              </h2>
+              <p className="text-muted-foreground max-w-2xl leading-relaxed mb-12">
+                An open-source framework enabling K-12 edtech developers to build, evaluate, and improve AI-powered formative assessments using multimodal student inputs — text, speech, drawing, and structured responses.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-0 divide-y md:divide-y-0 md:divide-x divide-border border border-border">
+                <div className="p-8">
+                  <div className="text-green-600 text-xs font-bold uppercase tracking-wider mb-3">01</div>
+                  <h3 className="font-bold uppercase tracking-wide mb-3">Assessment Pipeline SDK</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Configurable rubric schemas, feedback pipelines, and model-agnostic evaluation interfaces. Embeddable with a single <code className="text-green-600 bg-green-600/10 px-1 py-0.5 text-xs">npm install</code>.
+                  </p>
+                </div>
+                <div className="p-8">
+                  <div className="text-blue-500 text-xs font-bold uppercase tracking-wider mb-3">02</div>
+                  <h3 className="font-bold uppercase tracking-wide mb-3">Benchmark Suite</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Standardized evaluation measuring accuracy of knowledge diagnosis, learning progression alignment, fairness across subgroups, and actionability.
+                  </p>
+                </div>
+                <div className="p-8">
+                  <div className="text-purple-500 text-xs font-bold uppercase tracking-wider mb-3">03</div>
+                  <h3 className="font-bold uppercase tracking-wide mb-3">Multimodal Dataset</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    De-identified student work across written, spoken, and drawn modalities — annotated by expert educators. Aligned to Common Core and NGSS. Licensed CC-BY-4.0.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-8 border border-amber-600/30 bg-amber-600/5 p-6">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  <span className="text-amber-600 font-bold uppercase tracking-wider text-xs">Equity-Centered by Design</span> — OMAT centers multilingual learners, students with disabilities, and underserved communities. Speech and drawing inputs ensure students who can&apos;t yet write can still demonstrate what they know.
+                </p>
+              </div>
+
+              <p className="mt-6 text-xs text-muted-foreground">
+                OMAT follows the vision set forward by{' '}
+                <a href="https://digitalpromise.org" target="_blank" rel="noreferrer" className="underline hover:text-foreground transition-colors">
+                  Digital Promise
+                </a>
+                {' '}and the{' '}
+                <a href="https://k12-ai-infrastructure.org/faq-march-8th-rfp/" target="_blank" rel="noreferrer" className="underline hover:text-foreground transition-colors">
+                  K-12 AI Infrastructure Program
+                </a>
+                {' '}— that AI in education deserves shared, open infrastructure built for the students who need it most.
+              </p>
+            </div>
+          </div>
 
           {/* Features Grid - Brutalist grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x border-border divide-border border-b">
